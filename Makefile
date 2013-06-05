@@ -51,18 +51,23 @@
 #    licensing and training services.
 #*/
 
-CC=arm-elf-gcc
-OBJCOPY=arm-elf-objcopy
-ARCH=arm-elf-ar
-CRT0=boot.s
+RTOS_SOURCE_DIR=Source
+DEMO_SOURCE_DIR=Demo/ARM7_LPC2106_GCC
+DEMO_COMMON_SOURCE_DIR=Demo/Common
+
+CC=arm-none-eabi-gcc
+OBJCOPY=arm-none-eabi-objcopy
+ARCH=arm-none-eabi-ar
+CRT0=$(DEMO_SOURCE_DIR)/boot.s
 WARNINGS=-Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare \
 		-Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wunused
+
 
 #
 # CFLAGS common to both the THUMB and ARM mode builds
 #
-CFLAGS=$(WARNINGS) -D $(RUN_MODE) -D GCC_ARM7 -I. -I../../Source/include \
-		-I../Common/include $(DEBUG) -mcpu=arm7tdmi -T$(LDSCRIPT) \
+CFLAGS=$(WARNINGS) -D $(RUN_MODE) -D GCC_ARM7 -I$(DEMO_SOURCE_DIR) -I$(RTOS_SOURCE_DIR)/include \
+		-I$(DEMO_COMMON_SOURCE_DIR)/include $(DEBUG) -mcpu=arm7tdmi -T$(LDSCRIPT) \
 		 $(OPTIM) -fomit-frame-pointer -fno-strict-aliasing -fno-dwarf2-cfi-asm
 
 ifeq ($(USE_THUMB_MODE),YES)
@@ -73,23 +78,21 @@ endif
 
 LINKER_FLAGS=-Xlinker -ortosdemo.elf -Xlinker -M -Xlinker -Map=rtosdemo.map
 
-RTOS_SOURCE_DIR=../../Source
-DEMO_SOURCE_DIR=../Common/Minimal
 #
 # Source files that can be built to THUMB mode.
 #
 THUMB_SRC = \
-main.c \
-serial/serial.c \
-ParTest/ParTest.c \
-$(DEMO_SOURCE_DIR)/integer.c \
-$(DEMO_SOURCE_DIR)/flash.c \
-$(DEMO_SOURCE_DIR)/PollQ.c \
-$(DEMO_SOURCE_DIR)/comtest.c \
-$(DEMO_SOURCE_DIR)/flop.c \
-$(DEMO_SOURCE_DIR)/semtest.c \
-$(DEMO_SOURCE_DIR)/dynamic.c \
-$(DEMO_SOURCE_DIR)/BlockQ.c \
+$(DEMO_SOURCE_DIR)/main.c \
+$(DEMO_SOURCE_DIR)/serial/serial.c \
+$(DEMO_SOURCE_DIR)/ParTest/ParTest.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/integer.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/flash.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/PollQ.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/comtest.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/flop.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/semtest.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/dynamic.c \
+$(DEMO_COMMON_SOURCE_DIR)/Minimal/BlockQ.c \
 $(RTOS_SOURCE_DIR)/tasks.c \
 $(RTOS_SOURCE_DIR)/queue.c \
 $(RTOS_SOURCE_DIR)/list.c \
@@ -101,7 +104,7 @@ $(RTOS_SOURCE_DIR)/portable/GCC/ARM7_LPC2000/port.c
 #
 ARM_SRC = \
 $(RTOS_SOURCE_DIR)/portable/GCC/ARM7_LPC2000/portISR.c \
-serial/serialISR.c
+$(DEMO_SOURCE_DIR)/serial/serialISR.c
 
 #
 # Define all object files.

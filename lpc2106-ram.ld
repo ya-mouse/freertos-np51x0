@@ -1,15 +1,16 @@
 MEMORY 
 {
-	flash	: ORIGIN = 0, LENGTH = 120K
-	ram		: ORIGIN = 0x40000000, LENGTH = 64K
+	flash	: ORIGIN = 0, LENGTH = 512K
+	ram	: ORIGIN = 0x00000000, LENGTH = 64M
 }
 
-__stack_end__ = 0x40000000 + 64K - 4;
+/* define beginning and ending of stack */
+__stack_end__ = ORIGIN(ram)+LENGTH(ram) - 4;
 
 SECTIONS 
 {
 	. = 0;
-	startup : { *(.startup)} >flash
+	startup : { *(.startup)} >ram
 
 	prog : 
 	{
@@ -18,17 +19,17 @@ SECTIONS
 		*(.rodata*)
 		*(.glue_7)
 		*(.glue_7t)
-	} >flash
+	} >ram
 
+	. = ALIGN(4);
 	__end_of_text__ = .;
 
 	.data : 
 	{
 		__data_beg__ = .;
-		__data_beg_src__ = __end_of_text__;
 		*(.data)
 		__data_end__ = .;
-	} >ram AT>flash
+	} >ram
 
 	.bss : 
 	{
