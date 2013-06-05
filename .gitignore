@@ -1,0 +1,9 @@
+
+*.o
+*.a
+*.bak
+*.swp
+*.elf
+*.map
+*.hex
+*.dump
