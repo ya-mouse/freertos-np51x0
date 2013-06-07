@@ -109,6 +109,10 @@
 #define portNO_CRITICAL_NESTING		( ( unsigned long ) 0 )
 volatile unsigned long ulCriticalNesting = 9999UL;
 
+extern unsigned long portCompareMatch;
+
+int VICVectISR[32] = { 0 };
+
 /*-----------------------------------------------------------*/
 
 /* ISR to handle manual context switches (from a call to taskYIELD()). */
@@ -162,7 +166,11 @@ void vTickISR( void ) __attribute__((naked));
 void vTickISR( void )
 {
 	/* Save the context of the interrupted task. */
-	portSAVE_CONTEXT();	
+	/* Done at boot.s */
+
+	/* Clear Interrupt Controller */
+	VICIRQClear = ( 1 << 19 );
+	TM_INTRSTS &= ~0x7;
 
 	/* Increment the RTOS tick count, then look for the highest priority 
 	task that is ready to run. */
@@ -173,8 +181,7 @@ void vTickISR( void )
 	#endif
 
 	/* Ready for the next interrupt. */
-	T0_IR = portTIMER_MATCH_ISR_BIT;
-	VICVectAddr = portCLEAR_VIC_INTERRUPT;
+	T0_COUNTER = portCompareMatch;
 	
 	/* Restore the context of the new task. */
 	portRESTORE_CONTEXT();

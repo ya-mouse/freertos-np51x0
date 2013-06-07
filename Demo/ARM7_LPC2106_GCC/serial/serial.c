@@ -114,24 +114,24 @@
 /*-----------------------------------------------------------*/
 
 /* Constants to setup and access the UART. */
-#define serDLAB							( ( unsigned char ) 0x80 )
+#define serDLAB					( ( unsigned char ) 0x80 )
 #define serENABLE_INTERRUPTS			( ( unsigned char ) 0x03 )
-#define serNO_PARITY					( ( unsigned char ) 0x00 )
-#define ser1_STOP_BIT					( ( unsigned char ) 0x00 )
-#define ser8_BIT_CHARS					( ( unsigned char ) 0x03 )
-#define serFIFO_ON						( ( unsigned char ) 0x01 )
-#define serCLEAR_FIFO					( ( unsigned char ) 0x06 )
+#define serNO_PARITY				( ( unsigned char ) 0x00 )
+#define ser1_STOP_BIT				( ( unsigned char ) 0x00 )
+#define ser8_BIT_CHARS				( ( unsigned char ) 0x03 )
+#define serFIFO_ON				( ( unsigned char ) 0x01 )
+#define serCLEAR_FIFO				( ( unsigned char ) 0x06 )
 #define serWANTED_CLOCK_SCALING			( ( unsigned long ) 16 )
 
 /* Constants to setup and access the VIC. */
 #define serUART0_VIC_CHANNEL			( ( unsigned long ) 0x0006 )
-#define serUART0_VIC_CHANNEL_BIT		( ( unsigned long ) 0x0040 )
-#define serUART0_VIC_ENABLE				( ( unsigned long ) 0x0020 )
+#define serUART0_VIC_CHANNEL_BIT		( ( unsigned long ) ( 1 << 10 ) )
+#define serUART0_VIC_ENABLE			( ( unsigned long ) 0x0020 )
 #define serCLEAR_VIC_INTERRUPT			( ( unsigned long ) 0 )
 
-#define serINVALID_QUEUE				( ( xQueueHandle ) 0 )
-#define serHANDLE						( ( xComPortHandle ) 1 )
-#define serNO_BLOCK						( ( portTickType ) 0 )
+#define serINVALID_QUEUE			( ( xQueueHandle ) 0 )
+#define serHANDLE				( ( xComPortHandle ) 1 )
+#define serNO_BLOCK				( ( portTickType ) 0 )
 
 /*-----------------------------------------------------------*/
 
@@ -155,7 +155,7 @@ extern void vSerialISRCreateQueues(	unsigned portBASE_TYPE uxQueueLength, xQueue
 
 xComPortHandle xSerialPortInitMinimal( unsigned long ulWantedBaud, unsigned portBASE_TYPE uxQueueLength )
 {
-unsigned long ulDivisor, ulWantedClock;
+unsigned long ulDivisor;
 xComPortHandle xReturn = serHANDLE;
 extern void ( vUART_ISR_Wrapper )( void );
 
@@ -172,8 +172,26 @@ extern void ( vUART_ISR_Wrapper )( void );
 		portENTER_CRITICAL();
 		{
 			/* Setup the baud rate:  Calculate the divisor value. */
-			ulWantedClock = ulWantedBaud * serWANTED_CLOCK_SCALING;
-			ulDivisor = configCPU_CLOCK_HZ / ulWantedClock;
+			if ( ulWantedBaud == 115200 )
+			{
+				ulDivisor = configUART_CLOCK_HZ / 1843200;
+			}
+			else if ( ulWantedBaud == 57600 )
+			{
+				ulDivisor = configUART_CLOCK_HZ / 921600;
+			}
+			else if ( ulWantedBaud == 38400 )
+			{
+				ulDivisor = configUART_CLOCK_HZ / 614400;
+			}
+			else if ( ulWantedBaud == 19200 )
+			{
+				ulDivisor = configUART_CLOCK_HZ / 307200;
+			}
+			else if ( ulWantedBaud == 14400 )
+			{
+				ulDivisor = configUART_CLOCK_HZ / 230400;
+			}
 
 			/* Set the DLAB bit so we can access the divisor. */
 			UART0_LCR |= serDLAB;
@@ -183,17 +201,19 @@ extern void ( vUART_ISR_Wrapper )( void );
 			ulDivisor >>= 8;
 			UART0_DLM = ( unsigned char ) ( ulDivisor & ( unsigned long ) 0xff );
 
+			UART0_LCR &= ~serDLAB;
+
 			/* Turn on the FIFO's and clear the buffers. */
 			UART0_FCR = ( serFIFO_ON | serCLEAR_FIFO );
 
 			/* Setup transmission format. */
 			UART0_LCR = serNO_PARITY | ser1_STOP_BIT | ser8_BIT_CHARS;
 
-			/* Setup the VIC for the UART. */
-			VICIntSelect &= ~( serUART0_VIC_CHANNEL_BIT );
-			VICIntEnable |= serUART0_VIC_CHANNEL_BIT;
-			VICVectAddr1 = ( long ) vUART_ISR_Wrapper;
-			VICVectCntl1 = serUART0_VIC_CHANNEL | serUART0_VIC_ENABLE;
+			/* Setup the VIC for the UART, irq 10 active high. */
+			VICIRQMask |= serUART0_VIC_CHANNEL_BIT;
+			VICIRQMode &= ~( serUART0_VIC_CHANNEL_BIT );
+			VICIRQLevel &= ~( serUART0_VIC_CHANNEL_BIT );
+			VICVectAddr10 = ( long ) vUART_ISR_Wrapper;
 
 			/* Enable UART0 interrupts. */
 			UART0_IER |= serENABLE_INTERRUPTS;

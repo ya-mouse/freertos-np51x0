@@ -95,9 +95,6 @@
 
 /*-----------------------------------------------------------*/
 
-/* Constant to access the VIC. */
-#define serCLEAR_VIC_INTERRUPT			( ( unsigned long ) 0 )
-
 /* Constants to determine the ISR source. */
 #define serSOURCE_THRE					( ( unsigned char ) 0x02 )
 #define serSOURCE_RX_TIMEOUT			( ( unsigned char ) 0x0c )
@@ -147,7 +144,7 @@ void vSerialISRCreateQueues(	unsigned portBASE_TYPE uxQueueLength, xQueueHandle 
 void vUART_ISR_Wrapper( void )
 {
 	/* Save the context of the interrupted task. */
-	portSAVE_CONTEXT();
+	/* Done at boot.s*/
 
 	/* Call the handler.  This must be a separate function from the wrapper
 	to ensure the correct stack frame is set up. */
@@ -200,9 +197,6 @@ portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 	{
 		portYIELD_FROM_ISR();
 	}
-
-	/* Clear the ISR in the VIC. */
-	VICVectAddr = serCLEAR_VIC_INTERRUPT;
 }
 
 

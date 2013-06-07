@@ -163,8 +163,7 @@
 #define mainBUS_CLK_FULL	( ( unsigned char ) 0x01 )
 
 /* Constants for the ComTest tasks. */
-#define mainCOM_TEST_BAUD_RATE	( ( unsigned long ) 115200 )
-#define mainCOM_TEST_LED		( 3 )
+#define mainCOM_BAUD_RATE	( ( unsigned long ) 38400 )
 
 /* Priorities for the demo application tasks. */
 #define mainLED_TASK_PRIORITY		( tskIDLE_PRIORITY + 3 )
@@ -195,7 +194,7 @@ error. */
  * The Olimex demo board has a single built in LED.  This function simply
  * toggles its state. 
  */
-void prvToggleOnBoardLED( void );
+void prvToggleOnBoardLED( int num );
 
 /*
  * Checks that all the demo application tasks are still executing without error
@@ -230,11 +229,14 @@ static void prvSetupHardware( void );
  */
 int main( void )
 {
+	char *tstString = "Test UART0 function";
+
 	/* Setup the hardware for use with the Olimex demo board. */
 	prvSetupHardware();
 
 	/* Start the demo/test application tasks. */
 	vStartIntegerMathTasks( tskIDLE_PRIORITY );
+#if 0
 	vAltStartComTestTasks( mainCOM_TEST_PRIORITY, mainCOM_TEST_BAUD_RATE, mainCOM_TEST_LED );
 	vStartLEDFlashTasks( mainLED_TASK_PRIORITY );
 	vStartPolledQueueTasks( mainQUEUE_POLL_PRIORITY );
@@ -242,6 +244,8 @@ int main( void )
 	vStartSemaphoreTasks( mainSEM_TEST_PRIORITY );
 	vStartDynamicPriorityTasks();
 	vStartBlockingQueueTasks( mainBLOCK_Q_PRIORITY );
+#endif
+	vSerialPutString( NULL, (const signed char * const) tstString, 20 );
 
 	/* Start the check task - which is defined in this file. */
 	xTaskCreate( vErrorChecks, ( signed char * ) "Check", configMINIMAL_STACK_SIZE, NULL, mainCHECK_TASK_PRIORITY, NULL );
@@ -287,6 +291,8 @@ xTaskHandle xCreatedTask;
 		ulMemCheckTaskRunningCount = mainCOUNT_INITIAL_VALUE;
 		xCreatedTask = mainNO_TASK;
 
+		prvToggleOnBoardLED(1);
+
 		if( xTaskCreate( vMemCheckTask, ( signed char * ) "MEM_CHECK", configMINIMAL_STACK_SIZE, ( void * ) &ulMemCheckTaskRunningCount, tskIDLE_PRIORITY, &xCreatedTask ) != pdPASS )
 		{
 			/* Could not create the task - we have probably run out of heap. */
@@ -296,6 +302,8 @@ xTaskHandle xCreatedTask;
 		/* Delay until it is time to execute again. */
 		vTaskDelay( xDelayPeriod );
 	
+		prvToggleOnBoardLED(0x10);
+
 		/* Delete the dynamically created task. */
 		if( xCreatedTask != mainNO_TASK )
 		{
@@ -311,73 +319,38 @@ xTaskHandle xCreatedTask;
 			xDelayPeriod = mainERROR_FLASH_PERIOD;
 		}
 
-		prvToggleOnBoardLED();
+		prvToggleOnBoardLED(0x11);
 	}
 }
 /*-----------------------------------------------------------*/
+/* The sequence transmitted is from comFIRST_BYTE to and including comLAST_BYTE. */
+#define comFIRST_BYTE				( 'A' )
+#define comLAST_BYTE				( 'X' )
+
+#define comBUFFER_LEN   	( ( unsigned portBASE_TYPE ) ( comLAST_BYTE - comFIRST_BYTE ) + ( unsigned portBASE_TYPE ) 1 )
 
 static void prvSetupHardware( void )
 {
-	#ifdef RUN_FROM_RAM
-		/* Remap the interrupt vectors to RAM if we are are running from RAM. */
-		SCB_MEMMAP = 2;
-	#endif
+	/* Enable 37K Hz oscilator for timer controller source clock */
+	PMU_OSCC &= ~0x9;
 
-	/* Configure the RS2332 pins.  All other pins remain at their default of 0. */
-	PCB_PINSEL0 |= mainTX_ENABLE;
-	PCB_PINSEL0 |= mainRX_ENABLE;
+	/* wait until ready */
+	while (!(PMU_OSCC & 0x2))  { ; }
 
-	/* Set all GPIO to output other than the P0.14 (BSL), and the JTAG pins.  
-	The JTAG pins are left as input as I'm not sure what will happen if the 
-	Wiggler is connected after powerup - not that it would be a good idea to
-	do that anyway. */
-	GPIO_IODIR = ~( mainP0_14 + mainJTAG_PORT );
-
-	/* Setup the PLL to multiply the XTAL input by 4. */
-	SCB_PLLCFG = ( mainPLL_MUL_4 | mainPLL_DIV_1 );
-
-	/* Activate the PLL by turning it on then feeding the correct sequence of
-	bytes. */
-	SCB_PLLCON = mainPLL_ENABLE;
-	SCB_PLLFEED = mainPLL_FEED_BYTE1;
-	SCB_PLLFEED = mainPLL_FEED_BYTE2;
-
-	/* Wait for the PLL to lock... */
-	while( !( SCB_PLLSTAT & mainPLL_LOCK ) );
-
-	/* ...before connecting it using the feed sequence again. */
-	SCB_PLLCON = mainPLL_CONNECT;
-	SCB_PLLFEED = mainPLL_FEED_BYTE1;
-	SCB_PLLFEED = mainPLL_FEED_BYTE2;
-
-	/* Setup and turn on the MAM.  Three cycle access is used due to the fast
-	PLL used.  It is possible faster overall performance could be obtained by
-	tuning the MAM and PLL settings. */
-	MAM_TIM = mainMAM_TIM_3;
-	MAM_CR = mainMAM_MODE_FULL;
-
-	/* Setup the peripheral bus to be the same as the PLL output. */
-	SCB_VPBDIV = mainBUS_CLK_FULL;
-	
+	/* select 32768Hz oscillator */
+	PMU_OSCC |= 0x4;
 	/* Initialise LED outputs. */
 	vParTestInitialise();
+
+	xSerialPortInitMinimal( mainCOM_BAUD_RATE, comBUFFER_LEN );
 }
 /*-----------------------------------------------------------*/
 
-void prvToggleOnBoardLED( void )
+void prvToggleOnBoardLED( int num )
 {
-unsigned long ulState;
-
-	ulState = GPIO0_IOPIN;
-	if( ulState & mainON_BOARD_LED_BIT )
-	{
-		GPIO_IOCLR = mainON_BOARD_LED_BIT;
-	}
-	else
-	{
-		GPIO_IOSET = mainON_BOARD_LED_BIT;
-	}	
+	SMC_LED_ADDR = num;
 }
+
 /*-----------------------------------------------------------*/
 
 static long prvCheckOtherTasksAreStillRunning( unsigned long ulMemCheckTaskCount )
@@ -392,7 +365,7 @@ long lReturn = ( long ) pdPASS;
 	{
 		lReturn = ( long ) pdFAIL;
 	}
-
+#if 0
 	if( xAreComTestTasksStillRunning() != pdTRUE )
 	{
 		lReturn = ( long ) pdFAIL;
@@ -422,6 +395,7 @@ long lReturn = ( long ) pdPASS;
 	{
 		lReturn = ( long ) pdFAIL;
 	}
+#endif
 
 	if( ulMemCheckTaskCount == mainCOUNT_INITIAL_VALUE )
 	{
@@ -460,6 +434,8 @@ static long lErrorOccurred = pdFALSE;
 			/* We have never seen an error so increment the counter. */
 			( *pulMemCheckTaskRunningCounter )++;
 		}
+
+		prvToggleOnBoardLED(0x3);
 
 		/* Allocate some memory - just to give the allocator some extra 
 		exercise.  This has to be in a critical section to ensure the

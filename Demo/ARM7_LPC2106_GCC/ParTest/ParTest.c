@@ -82,9 +82,7 @@
 #include "FreeRTOS.h"
 #include "partest.h"
 
-#define partstFIRST_IO			( ( unsigned long ) 0x400 )
-#define partstNUM_LEDS			( 4 )
-#define partstALL_OUTPUTS_OFF	( ( unsigned long ) 0xffffffff )
+#define partstALL_OUTPUTS_OFF	( ( unsigned long ) 0 )
 
 /*-----------------------------------------------------------
  * Simple parallel port IO routines.
@@ -92,57 +90,26 @@
 
 void vParTestInitialise( void )
 {
-	/* This is performed from main() as the io bits are shared with other setup
-	functions. */
+	/* A320 board do nothing to output LED number 
+	 * Just write to 0x902FFFFC.
+	 */
 
 	/* Turn all outputs off. */
-	GPIO_IOSET = partstALL_OUTPUTS_OFF;
+	SMC_LED_ADDR = partstALL_OUTPUTS_OFF;
 }
 /*-----------------------------------------------------------*/
 
 void vParTestSetLED( unsigned portBASE_TYPE uxLED, signed portBASE_TYPE xValue )
 {
-unsigned long ulLED = partstFIRST_IO;
-
-	if( uxLED < partstNUM_LEDS )
-	{
-		/* Rotate to the wanted bit of port 0.  Only P10 to P13 have an LED
-		attached. */
-		ulLED <<= ( unsigned long ) uxLED;
-
-		/* Set of clear the output. */
-		if( xValue )
-		{
-			GPIO_IOCLR = ulLED;
-		}
-		else
-		{
-			GPIO_IOSET = ulLED;			
-		}
-	}	
+	if (xValue)
+		SMC_LED_ADDR = uxLED;
+	else
+		SMC_LED_ADDR = partstALL_OUTPUTS_OFF;
 }
 /*-----------------------------------------------------------*/
 
 void vParTestToggleLED( unsigned portBASE_TYPE uxLED )
 {
-unsigned long ulLED = partstFIRST_IO, ulCurrentState;
-
-	if( uxLED < partstNUM_LEDS )
-	{
-		/* Rotate to the wanted bit of port 0.  Only P10 to P13 have an LED
-		attached. */
-		ulLED <<= ( unsigned long ) uxLED;
-
-		/* If this bit is already set, clear it, and visa versa. */
-		ulCurrentState = GPIO0_IOPIN;
-		if( ulCurrentState & ulLED )
-		{
-			GPIO_IOCLR = ulLED;
-		}
-		else
-		{
-			GPIO_IOSET = ulLED;			
-		}
-	}	
+	SMC_LED_ADDR = uxLED;
 }
 

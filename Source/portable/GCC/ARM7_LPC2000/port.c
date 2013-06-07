@@ -90,33 +90,33 @@
 #include "task.h"
 
 /* Constants required to setup the task context. */
-#define portINITIAL_SPSR				( ( portSTACK_TYPE ) 0x1f ) /* System mode, ARM mode, interrupts enabled. */
-#define portTHUMB_MODE_BIT				( ( portSTACK_TYPE ) 0x20 )
+#define portINITIAL_SPSR			( ( portSTACK_TYPE ) 0x1f ) /* System mode, ARM mode, interrupts enabled. */
+#define portTHUMB_MODE_BIT			( ( portSTACK_TYPE ) 0x20 )
 #define portINSTRUCTION_SIZE			( ( portSTACK_TYPE ) 4 )
-#define portNO_CRITICAL_SECTION_NESTING	( ( portSTACK_TYPE ) 0 )
+#define portNO_CRITICAL_SECTION_NESTING		( ( portSTACK_TYPE ) 0 )
 
 /* Constants required to setup the tick ISR. */
 #define portENABLE_TIMER			( ( unsigned char ) 0x01 )
-#define portPRESCALE_VALUE			0x00
-#define portINTERRUPT_ON_MATCH		( ( unsigned long ) 0x01 )
-#define portRESET_COUNT_ON_MATCH	( ( unsigned long ) 0x02 )
+#define portTIMER_USE_EXT_CLK			( ( unsigned char ) 0x02 )
+#define portINTERRUPT_ON_MATCH			( ( unsigned long ) ~0x01 )
 
 /* Constants required to setup the VIC for the tick ISR. */
-#define portTIMER_VIC_CHANNEL		( ( unsigned long ) 0x0004 )
-#define portTIMER_VIC_CHANNEL_BIT	( ( unsigned long ) 0x0010 )
-#define portTIMER_VIC_ENABLE		( ( unsigned long ) 0x0020 )
+#define portTIMER_VIC_CHANNEL_BIT	( ( unsigned long ) ( 1 << 19 ) )
+
+unsigned long portCompareMatch;
 
 /*-----------------------------------------------------------*/
 
 /* Setup the timer to generate the tick interrupts. */
 static void prvSetupTimerInterrupt( void );
 
+#if 0
 /* 
  * The scheduler can only be started from ARM mode, so 
  * vPortISRStartFirstSTask() is defined in portISR.c. 
  */
 extern void vPortISRStartFirstTask( void );
-
+#endif
 /*-----------------------------------------------------------*/
 
 /* 
@@ -202,12 +202,51 @@ portSTACK_TYPE *pxOriginalTOS;
 
 portBASE_TYPE xPortStartScheduler( void )
 {
+extern volatile void * volatile pxCurrentTCB;
+extern volatile unsigned portLONG ulCriticalNesting;
 	/* Start the timer that generates the tick ISR.  Interrupts are disabled
 	here already. */
 	prvSetupTimerInterrupt();
 
 	/* Start the first task. */
-	vPortISRStartFirstTask();	
+	/* Set the LR to the task stack. */
+	__asm volatile (
+#ifdef __thumb__
+	"adr	r0,2f\n"
+	"bx	r0\n"
+	".align 2\n"
+	".arm\n"
+	"2:\n"
+#endif
+
+	"LDR	R0, =pxCurrentTCB\n"
+	"LDR	R0, [R0]\n"
+	"LDR	LR, [R0]\n"
+
+	/* The critical nesting depth is the first item on the stack. */
+	/* Load it into the ulCriticalNesting variable. */
+	"LDR	R0, =ulCriticalNesting\n"
+	"LDMFD	LR!, {R1}\n"
+	"STR	R1, [R0]\n"
+
+	/* Get the SPSR from the stack. */
+	"LDMFD	LR!, {R0}\n"
+	"MSR	SPSR, R0\n"
+
+	/* Restore all system mode registers for the task. */
+	"LDMFD	LR, {R0-R14}^\n"
+	"NOP\n"
+
+	/* Restore the return address. */
+	"LDR		LR, [LR, #+60]\n"
+
+	/* And return - correcting the offset in the LR to obtain the */
+	/* correct address. */
+	"SUBS	PC, LR, #4\n"
+	);
+
+	( void ) ulCriticalNesting;
+	( void ) pxCurrentTCB;
 
 	/* Should not get here! */
 	return 0;
@@ -226,41 +265,37 @@ void vPortEndScheduler( void )
  */
 static void prvSetupTimerInterrupt( void )
 {
-unsigned long ulCompareMatch;
 extern void ( vTickISR )( void );
-
-	/* A 1ms tick does not require the use of the timer prescale.  This is
-	defaulted to zero but can be used if necessary. */
-	T0_PR = portPRESCALE_VALUE;
+	TM_CONTROL = 
+	TM_INTRSTS = 0;
+	TM_INTRMASK = 0x1FF;
 
 	/* Calculate the match value required for our wanted tick rate. */
-	ulCompareMatch = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
+	portCompareMatch = configTIMER_OSC_CLOCK_HZ;// / configTICK_RATE_HZ;
 
-	/* Protect against divide by zero.  Using an if() statement still results
-	in a warning - hence the #if. */
-	#if portPRESCALE_VALUE != 0
-	{
-		ulCompareMatch /= ( portPRESCALE_VALUE + 1 );
-	}
-	#endif
-	T0_MR0 = ulCompareMatch;
+	T0_COUNTER = portCompareMatch;
+
+	/* Do not want timer to load automatically */
+	T0_LOAD = 0;
+
+	/* Interrupt when counter reach zero */
+	T0_MATCH1 = 0;
 
 	/* Generate tick with timer 0 compare match. */
-	T0_MCR = portRESET_COUNT_ON_MATCH | portINTERRUPT_ON_MATCH;
+	TM_INTRMASK &= portINTERRUPT_ON_MATCH;
 
-	/* Setup the VIC for the timer. */
-	VICIntSelect &= ~( portTIMER_VIC_CHANNEL_BIT );
-	VICIntEnable |= portTIMER_VIC_CHANNEL_BIT;
+	/* Setup the VIC for the timer. irq 19 edge rising. */
+	VICIRQMask |= portTIMER_VIC_CHANNEL_BIT;
+	VICIRQMode |= portTIMER_VIC_CHANNEL_BIT;
+	VICIRQLevel &= ~( portTIMER_VIC_CHANNEL_BIT );
 	
 	/* The ISR installed depends on whether the preemptive or cooperative
 	scheduler is being used. */
-
-	VICVectAddr0 = ( long ) vTickISR;
-	VICVectCntl0 = portTIMER_VIC_CHANNEL | portTIMER_VIC_ENABLE;
+	VICVectAddr19 = ( long ) vTickISR;
 
 	/* Start the timer - interrupts are disabled when this function is called
 	so it is okay to do this here. */
-	T0_TCR = portENABLE_TIMER;
+	TM_CONTROL |= (portENABLE_TIMER | portTIMER_USE_EXT_CLK);
 }
 /*-----------------------------------------------------------*/
 

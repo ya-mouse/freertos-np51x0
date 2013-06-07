@@ -57,6 +57,7 @@ DEMO_COMMON_SOURCE_DIR=Demo/Common
 
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
+OBJDUMP=arm-none-eabi-objdump
 ARCH=arm-none-eabi-ar
 CRT0=$(DEMO_SOURCE_DIR)/boot.s
 WARNINGS=-Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare \
@@ -66,8 +67,8 @@ WARNINGS=-Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align
 #
 # CFLAGS common to both the THUMB and ARM mode builds
 #
-CFLAGS=$(WARNINGS) -D $(RUN_MODE) -D GCC_ARM7 -I$(DEMO_SOURCE_DIR) -I$(RTOS_SOURCE_DIR)/include \
-		-I$(DEMO_COMMON_SOURCE_DIR)/include $(DEBUG) -mcpu=arm7tdmi -T$(LDSCRIPT) \
+CFLAGS=$(WARNINGS) -D $(RUN_MODE) -I$(DEMO_SOURCE_DIR) -I$(RTOS_SOURCE_DIR)/include \
+		-I$(DEMO_COMMON_SOURCE_DIR)/include $(DEBUG) -mcpu=fa526 -T$(LDSCRIPT) \
 		 $(OPTIM) -fomit-frame-pointer -fno-strict-aliasing -fno-dwarf2-cfi-asm
 
 ifeq ($(USE_THUMB_MODE),YES)
@@ -76,7 +77,7 @@ ifeq ($(USE_THUMB_MODE),YES)
 endif
 
 
-LINKER_FLAGS=-Xlinker -ortosdemo.elf -Xlinker -M -Xlinker -Map=rtosdemo.map
+LINKER_FLAGS= --fix-v4bx -Xlinker -ortosdemo.elf -Xlinker -M -Xlinker -Map=rtosdemo.map
 
 #
 # Source files that can be built to THUMB mode.
@@ -88,7 +89,6 @@ $(DEMO_SOURCE_DIR)/ParTest/ParTest.c \
 $(DEMO_COMMON_SOURCE_DIR)/Minimal/integer.c \
 $(DEMO_COMMON_SOURCE_DIR)/Minimal/flash.c \
 $(DEMO_COMMON_SOURCE_DIR)/Minimal/PollQ.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/comtest.c \
 $(DEMO_COMMON_SOURCE_DIR)/Minimal/flop.c \
 $(DEMO_COMMON_SOURCE_DIR)/Minimal/semtest.c \
 $(DEMO_COMMON_SOURCE_DIR)/Minimal/dynamic.c \
@@ -114,6 +114,7 @@ THUMB_OBJ = $(THUMB_SRC:.c=.o)
 
 rtosdemo.hex : rtosdemo.elf
 	$(OBJCOPY) rtosdemo.elf -O ihex rtosdemo.hex
+	$(OBJDUMP) -D rtosdemo.elf > rtosdemo.dump
 
 rtosdemo.elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0) Makefile
 	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
