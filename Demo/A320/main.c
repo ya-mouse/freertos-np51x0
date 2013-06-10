@@ -206,8 +206,6 @@ static void prvSetupHardware( void );
  */
 int main( void )
 {
-	char *tstString = "Test UART0 function";
-
 	/* Setup the hardware for use with the Olimex demo board. */
 	prvSetupHardware();
 
@@ -222,7 +220,7 @@ int main( void )
 	vStartDynamicPriorityTasks();
 	vStartBlockingQueueTasks( mainBLOCK_Q_PRIORITY );
 #endif
-	vSerialPutString( NULL, (const signed char * const) tstString, 20 );
+	vSerialPutString( (const char *) "Test UART0 function\n" );
 
 	/* Start the check task - which is defined in this file. */
 	xTaskCreate( vErrorChecks, ( signed char * ) "Check", configMINIMAL_STACK_SIZE, NULL, mainCHECK_TASK_PRIORITY, NULL );
@@ -249,6 +247,8 @@ xTaskHandle xCreatedTask;
 
 	/* The parameters are not used in this function. */
 	( void ) pvParameters;
+
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
 
 	/* Cycle for ever, delaying then checking all the other tasks are still
 	operating without error.  If an error is detected then the delay period
@@ -301,11 +301,6 @@ xTaskHandle xCreatedTask;
 	}
 }
 /*-----------------------------------------------------------*/
-/* The sequence transmitted is from comFIRST_BYTE to and including comLAST_BYTE. */
-#define comFIRST_BYTE				( 'A' )
-#define comLAST_BYTE				( 'X' )
-
-#define comBUFFER_LEN   	( ( unsigned portBASE_TYPE ) ( comLAST_BYTE - comFIRST_BYTE ) + ( unsigned portBASE_TYPE ) 1 )
 
 static void prvSetupHardware( void )
 {
@@ -320,7 +315,7 @@ static void prvSetupHardware( void )
 	/* Initialise LED outputs. */
 	vParTestInitialise();
 
-	xSerialPortInitMinimal( mainCOM_BAUD_RATE, comBUFFER_LEN );
+	xSerialPortInitMinimal( mainCOM_BAUD_RATE );
 }
 /*-----------------------------------------------------------*/
 

@@ -114,60 +114,27 @@
 /*-----------------------------------------------------------*/
 
 /* Constants to setup and access the UART. */
-#define serDLAB					( ( unsigned char ) 0x80 )
-#define serENABLE_INTERRUPTS			( ( unsigned char ) 0x03 )
-#define serNO_PARITY				( ( unsigned char ) 0x00 )
-#define ser1_STOP_BIT				( ( unsigned char ) 0x00 )
-#define ser8_BIT_CHARS				( ( unsigned char ) 0x03 )
-#define serFIFO_ON				( ( unsigned char ) 0x01 )
-#define serCLEAR_FIFO				( ( unsigned char ) 0x06 )
-#define serWANTED_CLOCK_SCALING			( ( unsigned long ) 16 )
+#define serDLAB 			( ( unsigned char ) 0x80 )
+#define serENABLE_INTERRUPTS		( ( unsigned char ) 0x03 )
+#define serNO_PARITY			( ( unsigned char ) 0x00 )
+#define ser1_STOP_BIT			( ( unsigned char ) 0x00 )
+#define ser8_BIT_CHARS			( ( unsigned char ) 0x03 )
+#define serFIFO_ON			( ( unsigned char ) 0x01 )
+#define serCLEAR_FIFO			( ( unsigned char ) 0x06 )
+#define serWANTED_CLOCK_SCALING 	( ( unsigned long ) 16 )
 
-/* Constants to setup and access the VIC. */
-#define serUART0_VIC_CHANNEL			( ( unsigned long ) 0x0006 )
-#define serUART0_VIC_CHANNEL_BIT		( ( unsigned long ) ( 1 << 10 ) )
-#define serUART0_VIC_ENABLE			( ( unsigned long ) 0x0020 )
-#define serCLEAR_VIC_INTERRUPT			( ( unsigned long ) 0 )
+#define serLSB_DATA_READY		( ( unsigned long ) ( 1 << 0 ) )
+#define serLSB_THR_EMPTY		( ( unsigned long ) ( 1 << 5 ) )
 
-#define serINVALID_QUEUE			( ( xQueueHandle ) 0 )
-#define serHANDLE				( ( xComPortHandle ) 1 )
-#define serNO_BLOCK				( ( portTickType ) 0 )
-
+#define serHANDLE			( ( xComPortHandle ) 1 )
 /*-----------------------------------------------------------*/
 
-/* Queues used to hold received characters, and characters waiting to be
-transmitted. */
-static xQueueHandle xRxedChars; 
-static xQueueHandle xCharsForTx; 
-
-/*-----------------------------------------------------------*/
-
-/* Communication flag between the interrupt service routine and serial API. */
-static volatile long *plTHREEmpty;
-
-/* 
- * The queues are created in serialISR.c as they are used from the ISR.
- * Obtain references to the queues and THRE Empty flag. 
- */
-extern void vSerialISRCreateQueues(	unsigned portBASE_TYPE uxQueueLength, xQueueHandle *pxRxedChars, xQueueHandle *pxCharsForTx, long volatile **pplTHREEmptyFlag );
-
-/*-----------------------------------------------------------*/
-
-xComPortHandle xSerialPortInitMinimal( unsigned long ulWantedBaud, unsigned portBASE_TYPE uxQueueLength )
+xComPortHandle xSerialPortInitMinimal( unsigned long ulWantedBaud )
 {
 unsigned long ulDivisor;
 xComPortHandle xReturn = serHANDLE;
-extern void ( vUART_ISR_Wrapper )( void );
 
-	/* The queues are used in the serial ISR routine, so are created from
-	serialISR.c (which is always compiled to ARM mode. */
-	vSerialISRCreateQueues( uxQueueLength, &xRxedChars, &xCharsForTx, &plTHREEmpty );
-
-	if( 
-		( xRxedChars != serINVALID_QUEUE ) && 
-		( xCharsForTx != serINVALID_QUEUE ) && 
-		( ulWantedBaud != ( unsigned long ) 0 ) 
-	  )
+	if( ulWantedBaud != ( unsigned long ) 0 )
 	{
 		portENTER_CRITICAL();
 		{
@@ -209,14 +176,8 @@ extern void ( vUART_ISR_Wrapper )( void );
 			/* Setup transmission format. */
 			UART0_LCR = serNO_PARITY | ser1_STOP_BIT | ser8_BIT_CHARS;
 
-			/* Setup the VIC for the UART, irq 10 active high. */
-			VICIRQMask |= serUART0_VIC_CHANNEL_BIT;
-			VICIRQMode &= ~( serUART0_VIC_CHANNEL_BIT );
-			VICIRQLevel &= ~( serUART0_VIC_CHANNEL_BIT );
-			VICVectAddr10 = ( long ) vUART_ISR_Wrapper;
-
-			/* Enable UART0 interrupts. */
-			UART0_IER |= serENABLE_INTERRUPTS;
+			/* Disable UART0 interrupts. */
+			UART0_IER &= ~serENABLE_INTERRUPTS;
 		}
 		portEXIT_CRITICAL();
 	}
@@ -229,85 +190,49 @@ extern void ( vUART_ISR_Wrapper )( void );
 }
 /*-----------------------------------------------------------*/
 
-signed portBASE_TYPE xSerialGetChar( xComPortHandle pxPort, signed char *pcRxedChar, portTickType xBlockTime )
+signed portBASE_TYPE xSerialGetChar( signed char *pcRxedChar )
 {
-	/* The port handle is not required as this driver only supports UART0. */
-	( void ) pxPort;
+	while (!(UART0_LSR & serLSB_DATA_READY)) ;
 
-	/* Get the next character from the buffer.  Return false if no characters
-	are available, or arrive before xBlockTime expires. */
-	if( xQueueReceive( xRxedChars, pcRxedChar, xBlockTime ) )
-	{
-		return pdTRUE;
-	}
-	else
-	{
-		return pdFALSE;
-	}
+	if ((*pcRxedChar = UART0_RBR) == '\r')
+		*pcRxedChar = '\n';
+
+	return pdPASS;
 }
 /*-----------------------------------------------------------*/
 
-void vSerialPutString( xComPortHandle pxPort, const signed char * const pcString, unsigned short usStringLength )
+void vSerialPutString( const char * pcString )
 {
 signed char *pxNext;
 
 	/* NOTE: This implementation does not handle the queue being full as no
 	block time is used! */
 
-	/* The port handle is not required as this driver only supports UART0. */
-	( void ) pxPort;
-	( void ) usStringLength;
-
 	/* Send each character in the string, one at a time. */
 	pxNext = ( signed char * ) pcString;
 	while( *pxNext )
 	{
-		xSerialPutChar( pxPort, *pxNext, serNO_BLOCK );
+		if (*pxNext == '\n')
+			xSerialPutChar( '\r' );
+
+		xSerialPutChar( *pxNext );
 		pxNext++;
 	}
 }
 /*-----------------------------------------------------------*/
 
-signed portBASE_TYPE xSerialPutChar( xComPortHandle pxPort, signed char cOutChar, portTickType xBlockTime )
+signed portBASE_TYPE xSerialPutChar( signed char cOutChar )
 {
-signed portBASE_TYPE xReturn;
-
-	/* This demo driver only supports one port so the parameter is not used. */
-	( void ) pxPort;
-
 	portENTER_CRITICAL();
 	{
-		/* Is there space to write directly to the UART? */
-		if( *plTHREEmpty == ( long ) pdTRUE )
-		{
-			/* We wrote the character directly to the UART, so was 
-			successful. */
-			*plTHREEmpty = pdFALSE;
-			UART0_THR = cOutChar;
-			xReturn = pdPASS;
-		}
-		else 
-		{
-			/* We cannot write directly to the UART, so queue the character.
-			Block for a maximum of xBlockTime if there is no space in the
-			queue. */
-			xReturn = xQueueSend( xCharsForTx, &cOutChar, xBlockTime );
+		/* Is there space to write to the UART? */
+		while (!(UART0_LSR & serLSB_THR_EMPTY)) ;
 
-			/* Depending on queue sizing and task prioritisation:  While we 
-			were blocked waiting to post interrupts were not disabled.  It is 
-			possible that the serial ISR has emptied the Tx queue, in which
-			case we need to start the Tx off again. */
-			if( ( *plTHREEmpty == ( long ) pdTRUE ) && ( xReturn == pdPASS ) )
-			{
-				xQueueReceive( xCharsForTx, &cOutChar, serNO_BLOCK );
-				*plTHREEmpty = pdFALSE;
-				UART0_THR = cOutChar;
-			}
-		}
+		UART0_THR = cOutChar;
 	}
 	portEXIT_CRITICAL();
 
-	return xReturn;
+	return pdPASS;
 }
 /*-----------------------------------------------------------*/
 
