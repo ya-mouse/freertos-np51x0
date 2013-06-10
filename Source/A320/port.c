@@ -110,13 +110,12 @@ unsigned long portCompareMatch;
 /* Setup the timer to generate the tick interrupts. */
 static void prvSetupTimerInterrupt( void );
 
-#if 0
 /* 
  * The scheduler can only be started from ARM mode, so 
  * vPortISRStartFirstSTask() is defined in portISR.c. 
  */
 extern void vPortISRStartFirstTask( void );
-#endif
+
 /*-----------------------------------------------------------*/
 
 /* 
@@ -202,51 +201,12 @@ portSTACK_TYPE *pxOriginalTOS;
 
 portBASE_TYPE xPortStartScheduler( void )
 {
-extern volatile void * volatile pxCurrentTCB;
-extern volatile unsigned portLONG ulCriticalNesting;
 	/* Start the timer that generates the tick ISR.  Interrupts are disabled
 	here already. */
 	prvSetupTimerInterrupt();
 
 	/* Start the first task. */
-	/* Set the LR to the task stack. */
-	__asm volatile (
-#ifdef __thumb__
-	"adr	r0,2f\n"
-	"bx	r0\n"
-	".align 2\n"
-	".arm\n"
-	"2:\n"
-#endif
-
-	"LDR	R0, =pxCurrentTCB\n"
-	"LDR	R0, [R0]\n"
-	"LDR	LR, [R0]\n"
-
-	/* The critical nesting depth is the first item on the stack. */
-	/* Load it into the ulCriticalNesting variable. */
-	"LDR	R0, =ulCriticalNesting\n"
-	"LDMFD	LR!, {R1}\n"
-	"STR	R1, [R0]\n"
-
-	/* Get the SPSR from the stack. */
-	"LDMFD	LR!, {R0}\n"
-	"MSR	SPSR, R0\n"
-
-	/* Restore all system mode registers for the task. */
-	"LDMFD	LR, {R0-R14}^\n"
-	"NOP\n"
-
-	/* Restore the return address. */
-	"LDR		LR, [LR, #+60]\n"
-
-	/* And return - correcting the offset in the LR to obtain the */
-	/* correct address. */
-	"SUBS	PC, LR, #4\n"
-	);
-
-	( void ) ulCriticalNesting;
-	( void ) pxCurrentTCB;
+	vPortISRStartFirstTask();
 
 	/* Should not get here! */
 	return 0;

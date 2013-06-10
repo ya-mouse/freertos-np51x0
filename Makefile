@@ -50,9 +50,9 @@
 #    http://www.OpenRTOS.com - Commercial support, development, porting,
 #    licensing and training services.
 #*/
-
+BOARD_NAME=A320
 RTOS_SOURCE_DIR=Source
-DEMO_SOURCE_DIR=Demo/ARM7_LPC2106_GCC
+DEMO_SOURCE_DIR=Demo/$(BOARD_NAME)
 DEMO_COMMON_SOURCE_DIR=Demo/Common
 
 CC=arm-none-eabi-gcc
@@ -67,7 +67,7 @@ WARNINGS=-Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align
 #
 # CFLAGS common to both the THUMB and ARM mode builds
 #
-CFLAGS=$(WARNINGS) -D $(RUN_MODE) -I$(DEMO_SOURCE_DIR) -I$(RTOS_SOURCE_DIR)/include \
+CFLAGS=$(WARNINGS) -D $(RUN_MODE) -D $(BOARD_NAME) -I$(DEMO_SOURCE_DIR) -I$(RTOS_SOURCE_DIR)/include \
 		-I$(DEMO_COMMON_SOURCE_DIR)/include $(DEBUG) -mcpu=fa526 -T$(LDSCRIPT) \
 		 $(OPTIM) -fomit-frame-pointer -fno-strict-aliasing -fno-dwarf2-cfi-asm
 
@@ -96,14 +96,14 @@ $(DEMO_COMMON_SOURCE_DIR)/Minimal/BlockQ.c \
 $(RTOS_SOURCE_DIR)/tasks.c \
 $(RTOS_SOURCE_DIR)/queue.c \
 $(RTOS_SOURCE_DIR)/list.c \
-$(RTOS_SOURCE_DIR)/portable/MemMang/heap_2.c \
-$(RTOS_SOURCE_DIR)/portable/GCC/ARM7_LPC2000/port.c
+$(RTOS_SOURCE_DIR)/MemMang/heap_2.c \
+$(RTOS_SOURCE_DIR)/$(BOARD_NAME)/port.c
 
 #
 # Source files that must be built to ARM mode.
 #
 ARM_SRC = \
-$(RTOS_SOURCE_DIR)/portable/GCC/ARM7_LPC2000/portISR.c \
+$(RTOS_SOURCE_DIR)/$(BOARD_NAME)/portISR.c \
 $(DEMO_SOURCE_DIR)/serial/serialISR.c
 
 #

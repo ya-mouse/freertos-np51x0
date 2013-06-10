@@ -80,47 +80,10 @@
 #define PORTABLE_H
 
 /* Include the macro file relevant to the port being used. */
-
-#include "../../Source/portable/GCC/ARM7_LPC2000/portmacro.h"
-
-#ifdef BCC_INDUSTRIAL_PC_PORT
-	/* A short file name has to be used in place of the normal
-	FreeRTOSConfig.h when using the Borland compiler. */
-	#include "frconfig.h"
-	#include "..\portable\BCC\16BitDOS\PC\prtmacro.h"
-    typedef void ( __interrupt __far *pxISR )();
+#ifdef A320
+#include "../A320/portmacro.h"
 #endif
 
-#ifdef BCC_FLASH_LITE_186_PORT
-	/* A short file name has to be used in place of the normal
-	FreeRTOSConfig.h when using the Borland compiler. */
-	#include "frconfig.h"
-	#include "..\portable\BCC\16BitDOS\flsh186\prtmacro.h"
-    typedef void ( __interrupt __far *pxISR )();
-#endif
-
-#ifdef __GNUC__
-   #ifdef __AVR32_AVR32A__
-	   #include "portmacro.h"
-   #endif
-#endif
-
-#ifdef __ICCAVR32__
-   #ifdef __CORE__
-      #if __CORE__ == __AVR32A__
-	      #include "portmacro.h"
-      #endif
-   #endif
-#endif
-
-#ifdef __91467D
-	#include "portmacro.h"
-#endif
-
-#ifdef __96340
-	#include "portmacro.h"
-#endif
-	
 /* Catch all to ensure portmacro.h is included in the build.  Newer demos
 have the path as part of the project options, rather than as relative from
 the project location.  If portENTER_CRITICAL() has not been defined then

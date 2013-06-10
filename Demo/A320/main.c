@@ -140,28 +140,6 @@
 
 /*-----------------------------------------------------------*/
 
-/* Constants to setup I/O. */
-#define mainTX_ENABLE	( ( unsigned long ) 0x0001 )
-#define mainRX_ENABLE	( ( unsigned long ) 0x0004 )
-#define mainP0_14		( ( unsigned long ) 0x4000 )
-#define mainJTAG_PORT	( ( unsigned long ) 0x3E0000UL )
-
-/* Constants to setup the PLL. */
-#define mainPLL_MUL_4		( ( unsigned char ) 0x0003 )
-#define mainPLL_DIV_1		( ( unsigned char ) 0x0000 )
-#define mainPLL_ENABLE		( ( unsigned char ) 0x0001 )
-#define mainPLL_CONNECT		( ( unsigned char ) 0x0003 )
-#define mainPLL_FEED_BYTE1	( ( unsigned char ) 0xaa )
-#define mainPLL_FEED_BYTE2	( ( unsigned char ) 0x55 )
-#define mainPLL_LOCK		( ( unsigned long ) 0x0400 )
-
-/* Constants to setup the MAM. */
-#define mainMAM_TIM_3		( ( unsigned char ) 0x03 )
-#define mainMAM_MODE_FULL	( ( unsigned char ) 0x02 )
-
-/* Constants to setup the peripheral bus. */
-#define mainBUS_CLK_FULL	( ( unsigned char ) 0x01 )
-
 /* Constants for the ComTest tasks. */
 #define mainCOM_BAUD_RATE	( ( unsigned long ) 38400 )
 
@@ -177,11 +155,10 @@
 error. */
 #define mainNO_ERROR_FLASH_PERIOD	( ( portTickType ) 3000 / portTICK_RATE_MS  )
 #define mainERROR_FLASH_PERIOD		( ( portTickType ) 500 / portTICK_RATE_MS  )
-#define mainON_BOARD_LED_BIT		( ( unsigned long ) 0x80 )
 
 /* Constants used by the vMemCheckTask() task. */
 #define mainCOUNT_INITIAL_VALUE		( ( unsigned long ) 0 )
-#define mainNO_TASK					( 0 )
+#define mainNO_TASK			( 0 )
 
 /* The size of the memory blocks allocated by the vMemCheckTask() task. */
 #define mainMEM_CHECK_SIZE_1		( ( size_t ) 51 )
@@ -317,6 +294,7 @@ xTaskHandle xCreatedTask;
 		{
 			/* An error has been detected in one of the tasks - flash faster. */
 			xDelayPeriod = mainERROR_FLASH_PERIOD;
+			prvToggleOnBoardLED(0x80);
 		}
 
 		prvToggleOnBoardLED(0x11);
