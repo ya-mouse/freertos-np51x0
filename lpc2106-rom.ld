@@ -21,6 +21,13 @@ SECTIONS
 		*(.glue_7t)
 	} >flash
 
+	.ARM.exidx :
+	{
+		__exidx_start = .;
+		*(.ARM.exidx* .gnu.linkonce.armexidx.*)
+		__exidx_end = .;
+	} >flash
+
 	. = ALIGN(4);
 	__end_of_text__ = .;
 
