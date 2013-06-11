@@ -86,7 +86,6 @@
 #include "task.h"
 
 /* Demo program include files. */
-#include "partest.h"
 #include "integer.h"
 
 /* The constants used in the calculation. */
@@ -141,8 +140,6 @@ volatile signed portBASE_TYPE *pxTaskHasExecuted;
 	/* Keep performing a calculation and checking the result against a constant. */
 	for( ;; )
 	{
-		vParTestSetLED( 0x5, 1);
-
 		/* Perform the calculation.  This will store partial value in
 		registers, resulting in a good test of the context switch mechanism. */
 		lValue = intgCONST1;

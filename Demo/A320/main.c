@@ -279,8 +279,6 @@ xTaskHandle xCreatedTask;
 		/* Delay until it is time to execute again. */
 		vTaskDelay( xDelayPeriod );
 	
-		prvToggleOnBoardLED(0x10);
-
 		/* Delete the dynamically created task. */
 		if( xCreatedTask != mainNO_TASK )
 		{
@@ -297,7 +295,6 @@ xTaskHandle xCreatedTask;
 			prvToggleOnBoardLED(0x80);
 		}
 
-		prvToggleOnBoardLED(0x11);
 	}
 }
 /*-----------------------------------------------------------*/
@@ -408,7 +405,6 @@ static long lErrorOccurred = pdFALSE;
 			( *pulMemCheckTaskRunningCounter )++;
 		}
 
-		prvToggleOnBoardLED(0x3);
 
 		/* Allocate some memory - just to give the allocator some extra 
 		exercise.  This has to be in a critical section to ensure the

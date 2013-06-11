@@ -231,7 +231,7 @@ extern void ( vTickISR )( void );
 	TM_INTRMASK = 0x1FF;
 
 	/* Calculate the match value required for our wanted tick rate. */
-	portCompareMatch = configTIMER_OSC_CLOCK_HZ;// / configTICK_RATE_HZ;
+	portCompareMatch = configTIMER_OSC_CLOCK_HZ / configTICK_RATE_HZ;
 
 	T0_COUNTER = portCompareMatch;
 
