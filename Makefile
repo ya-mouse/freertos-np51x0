@@ -54,6 +54,7 @@ BOARD_NAME=A320
 RTOS_SOURCE_DIR=Source
 DEMO_SOURCE_DIR=Demo/$(BOARD_NAME)
 DEMO_COMMON_SOURCE_DIR=Demo/Common
+LWIP_SOURCE_DIR=lwip-1.4.0
 
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
@@ -68,8 +69,9 @@ WARNINGS=-Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align
 # CFLAGS common to both the THUMB and ARM mode builds
 #
 CFLAGS=$(WARNINGS) -D $(RUN_MODE) -D $(BOARD_NAME) -I$(DEMO_SOURCE_DIR) -I$(RTOS_SOURCE_DIR)/include \
-		-I$(DEMO_COMMON_SOURCE_DIR)/include $(DEBUG) -mcpu=fa526 -T$(LDSCRIPT) \
-		 $(OPTIM) -fomit-frame-pointer -fno-strict-aliasing -fno-dwarf2-cfi-asm
+		-I$(DEMO_COMMON_SOURCE_DIR)/include -I$(LWIP_SOURCE_DIR)/src/include -I$(LWIP_SOURCE_DIR)/src/include/ipv4 \
+		-I$(LWIP_SOURCE_DIR)/$(BOARD_NAME)/include \
+		 $(DEBUG) -mcpu=fa526 -T$(LDSCRIPT) $(OPTIM) -fomit-frame-pointer -fno-strict-aliasing -fno-dwarf2-cfi-asm
 
 ifeq ($(USE_THUMB_MODE),YES)
 	CFLAGS += -mthumb-interwork -D THUMB_INTERWORK
@@ -83,28 +85,27 @@ LINKER_FLAGS= --fix-v4bx -Xlinker -ortosdemo.elf -Xlinker -M -Xlinker -Map=rtosd
 # Source files that can be built to THUMB mode.
 #
 THUMB_SRC = \
-$(DEMO_SOURCE_DIR)/main.c \
-$(DEMO_SOURCE_DIR)/serial/serial.c \
-$(DEMO_SOURCE_DIR)/ParTest/ParTest.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/integer.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/flash.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/PollQ.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/flop.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/semtest.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/dynamic.c \
-$(DEMO_COMMON_SOURCE_DIR)/Minimal/BlockQ.c \
-$(RTOS_SOURCE_DIR)/tasks.c \
-$(RTOS_SOURCE_DIR)/queue.c \
-$(RTOS_SOURCE_DIR)/list.c \
-$(RTOS_SOURCE_DIR)/MemMang/heap_2.c \
-$(RTOS_SOURCE_DIR)/$(BOARD_NAME)/port.c
+$(addprefix $(DEMO_SOURCE_DIR)/, main.c serial/serial.c ParTest/ParTest.c) \
+$(addprefix $(DEMO_COMMON_SOURCE_DIR)/Minimal/, integer.c flash.c PollQ.c flop.c semtest.c dynamic.c BlockQ.c) \
+$(addprefix $(RTOS_SOURCE_DIR)/, tasks.c queue.c list.c) \
+$(addprefix $(RTOS_SOURCE_DIR)/MemMang/, heap_2.c) \
+$(addprefix $(RTOS_SOURCE_DIR)/$(BOARD_NAME)/, port.c)
 
 #
 # Source files that must be built to ARM mode.
 #
+#lwip/src/core/: dhcp.c  dns.c  ipv6
+#lwip/src/core/ipv4: autoip.c   igmp.c  inet.c
 ARM_SRC = \
 $(RTOS_SOURCE_DIR)/$(BOARD_NAME)/portISR.c \
-$(DEMO_SOURCE_DIR)/serial/serialISR.c
+$(DEMO_SOURCE_DIR)/serial/serialISR.c \
+$(addprefix $(LWIP_SOURCE_DIR)/src/core/, init.c tcp_out.c mem.c memp.c netif.c pbuf.c raw.c \
+					  stats.c sys.c tcp.c tcp_in.c udp.c def.c lwip_timers.c) \
+$(addprefix $(LWIP_SOURCE_DIR)/src/core/ipv4/, inet.c ip.c ip_addr.c icmp.c ip_frag.c inet_chksum.c) \
+$(addprefix $(LWIP_SOURCE_DIR)/src/api/, tcpip.c api_msg.c err.c api_lib.c netbuf.c netdb.c netifapi.c sockets.c) \
+$(addprefix $(LWIP_SOURCE_DIR)/src/netif/, etharp.c) \
+$(addprefix $(LWIP_SOURCE_DIR)/A320/, sys_arch.c)
+
 
 #
 # Define all object files.
