@@ -75,6 +75,8 @@
 #ifndef SERIAL_COMMS_H
 #define SERIAL_COMMS_H
 
+#include "FreeRTOS.h"
+
 typedef void * xComPortHandle;
 
 typedef enum
@@ -139,6 +141,12 @@ void vSerialPutString( const char * pcString );
 signed portBASE_TYPE xSerialGetChar( signed char *pcRxedChar );
 signed portBASE_TYPE xSerialPutChar( signed char cOutChar );
 void vSerialClose( xComPortHandle xPort );
+
+
+/* Implement at Demo/libc/stdio/simple_printf.c */
+extern int simple_sprintf(char *str, const char *format, ...);
+extern int simple_snprintf(char *str, size_t size, const char *format, ...);
+extern int simple_printf(const char *format, ...);
 
 #endif
 

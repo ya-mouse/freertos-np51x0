@@ -33,10 +33,8 @@
 #define __ARCH_CC_H__
 
 /* Include some files for defining library routines */
-#include <stdio.h> /* printf, fflush, FILE */
 #include <stdlib.h> /* abort */
-
-#define LWIP_TIMEVAL_PRIVATE 0
+#include <serial.h> /* printf */
 
 /** @todo fix some warnings: don't use #pragma if compiling with cygwin gcc */
 #ifndef __GNUC__
@@ -81,18 +79,21 @@ typedef u32_t sys_prot_t;
 #define PACK_STRUCT_BEGIN
 #define PACK_STRUCT_END
 
+/* C runtime functions redefined */
+#define printf	simple_printf
+#define sprintf	simple_sprintf
+#define snprintf simeple_snprintf
+
 /* Plaform specific diagnostic output */
 #define LWIP_PLATFORM_DIAG(x)   do { printf x; } while(0)
 
 #define LWIP_PLATFORM_ASSERT(x) do { printf("Assertion \"%s\" failed at line %d in %s\n", \
-                                     x, __LINE__, __FILE__); fflush(NULL); abort(); } while(0)
+                                     x, __LINE__, __FILE__); /*fflush(NULL); abort();*/ } while(0)
 
 #define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
   printf("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__); \
-  fflush(NULL);handler;} } while(0)
+  /*fflush(NULL);*/handler;} } while(0)
 
-/* C runtime functions redefined */
-#define snprintf _snprintf
 
 u32_t dns_lookup_external_hosts_file(const char *name);
 

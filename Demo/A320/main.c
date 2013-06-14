@@ -209,17 +209,18 @@ int main( void )
 	/* Setup the hardware for use with the Olimex demo board. */
 	prvSetupHardware();
 
+	/* Init lwip library */
+	lwip_init();
+
 	/* Start the demo/test application tasks. */
 	vStartIntegerMathTasks( tskIDLE_PRIORITY );
-#if 0
-	vAltStartComTestTasks( mainCOM_TEST_PRIORITY, mainCOM_TEST_BAUD_RATE, mainCOM_TEST_LED );
 	vStartLEDFlashTasks( mainLED_TASK_PRIORITY );
 	vStartPolledQueueTasks( mainQUEUE_POLL_PRIORITY );
 	vStartMathTasks( tskIDLE_PRIORITY );
 	vStartSemaphoreTasks( mainSEM_TEST_PRIORITY );
 	vStartDynamicPriorityTasks();
 	vStartBlockingQueueTasks( mainBLOCK_Q_PRIORITY );
-#endif
+
 	vSerialPutString( (const char *) "Test UART0 function\n" );
 
 	/* Start the check task - which is defined in this file. */
@@ -293,6 +294,11 @@ xTaskHandle xCreatedTask;
 			/* An error has been detected in one of the tasks - flash faster. */
 			xDelayPeriod = mainERROR_FLASH_PERIOD;
 			prvToggleOnBoardLED(0x80);
+			xSerialPutChar('E');
+		}
+		else
+		{
+			xSerialPutChar('.');
 		}
 
 	}
@@ -335,11 +341,6 @@ long lReturn = ( long ) pdPASS;
 	{
 		lReturn = ( long ) pdFAIL;
 	}
-#if 0
-	if( xAreComTestTasksStillRunning() != pdTRUE )
-	{
-		lReturn = ( long ) pdFAIL;
-	}
 
 	if( xArePollingQueuesStillRunning() != pdTRUE )
 	{
@@ -365,7 +366,6 @@ long lReturn = ( long ) pdPASS;
 	{
 		lReturn = ( long ) pdFAIL;
 	}
-#endif
 
 	if( ulMemCheckTaskCount == mainCOUNT_INITIAL_VALUE )
 	{

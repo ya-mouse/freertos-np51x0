@@ -53,6 +53,7 @@
 BOARD_NAME=A320
 RTOS_SOURCE_DIR=Source
 DEMO_SOURCE_DIR=Demo/$(BOARD_NAME)
+DEMO_LIB_SOURCE_DIR=Demo/libc
 DEMO_COMMON_SOURCE_DIR=Demo/Common
 LWIP_SOURCE_DIR=lwip-1.4.0
 
@@ -104,7 +105,9 @@ $(addprefix $(LWIP_SOURCE_DIR)/src/core/, init.c tcp_out.c mem.c memp.c netif.c 
 $(addprefix $(LWIP_SOURCE_DIR)/src/core/ipv4/, inet.c ip.c ip_addr.c icmp.c ip_frag.c inet_chksum.c) \
 $(addprefix $(LWIP_SOURCE_DIR)/src/api/, tcpip.c api_msg.c err.c api_lib.c netbuf.c netdb.c netifapi.c sockets.c) \
 $(addprefix $(LWIP_SOURCE_DIR)/src/netif/, etharp.c) \
-$(addprefix $(LWIP_SOURCE_DIR)/A320/, sys_arch.c)
+$(addprefix $(LWIP_SOURCE_DIR)/A320/, sys_arch.c) \
+$(DEMO_LIB_SOURCE_DIR)/stdlib/div64.c \
+$(DEMO_LIB_SOURCE_DIR)/stdio/simple_printf.c
 
 
 #
