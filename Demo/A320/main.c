@@ -201,6 +201,7 @@ static void prvSetupHardware( void );
 
 /*-----------------------------------------------------------*/
 
+extern void apps_init( void );
 /*
  * Starts all the other tasks, then starts the scheduler. 
  */
@@ -209,9 +210,9 @@ int main( void )
 	/* Setup the hardware for use with the Olimex demo board. */
 	prvSetupHardware();
 
-	/* Init lwip library */
-	lwip_init();
-
+	/* Add network interface to the system */
+	apps_init();
+#if 0
 	/* Start the demo/test application tasks. */
 	vStartIntegerMathTasks( tskIDLE_PRIORITY );
 	vStartLEDFlashTasks( mainLED_TASK_PRIORITY );
@@ -225,7 +226,7 @@ int main( void )
 
 	/* Start the check task - which is defined in this file. */
 	xTaskCreate( vErrorChecks, ( signed char * ) "Check", configMINIMAL_STACK_SIZE, NULL, mainCHECK_TASK_PRIORITY, NULL );
-
+#endif
 	/* Now all the tasks have been started - start the scheduler.
 
 	NOTE : Tasks run in system mode and the scheduler runs in Supervisor mode.
@@ -294,11 +295,11 @@ xTaskHandle xCreatedTask;
 			/* An error has been detected in one of the tasks - flash faster. */
 			xDelayPeriod = mainERROR_FLASH_PERIOD;
 			prvToggleOnBoardLED(0x80);
-			xSerialPutChar('E');
+			//xSerialPutChar('E');
 		}
 		else
 		{
-			xSerialPutChar('.');
+			//xSerialPutChar('.');
 		}
 
 	}

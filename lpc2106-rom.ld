@@ -38,6 +38,12 @@ SECTIONS
 		__data_end__ = .;
 	} >ram
 
+	. = ALIGN(16);
+	.netbuf(NOLOAD) :
+	{
+		*(.nbuf) 
+	} >ram
+
 	.bss : 
 	{
 		__bss_beg__ = .;

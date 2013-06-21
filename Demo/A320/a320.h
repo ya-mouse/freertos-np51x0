@@ -59,6 +59,12 @@ extern int VICVectISR[32];
 #define VICVectAddr17	VICVectISR[17]
 #define VICVectAddr18	VICVectISR[18]
 #define VICVectAddr19	VICVectISR[19]
+#define VICVectAddr20	VICVectISR[20]
+#define VICVectAddr21	VICVectISR[21]
+#define VICVectAddr22	VICVectISR[22]
+#define VICVectAddr23	VICVectISR[23]
+#define VICVectAddr24	VICVectISR[24]
+#define VICVectAddr25	VICVectISR[25]
 
 /*##############################################################################
 ## PCB - Pin Connect Block

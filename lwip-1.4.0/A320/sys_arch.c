@@ -384,6 +384,42 @@ unsigned long ulReturn;
 	return ulReturn;
 }
 
+/*---------------------------------------------------------------------------*
+ * Routine:  sys_sem_signal
+ *---------------------------------------------------------------------------*
+ * Description:
+ *      Signals (releases) a semaphore
+ * Inputs:
+ *      sys_sem_t sem           -- Semaphore to signal
+ *---------------------------------------------------------------------------*/
+void sys_sem_signal( sys_sem_t *pxSemaphore )
+{
+portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+
+	if( xInsideISR != pdFALSE )
+	{
+		xSemaphoreGiveFromISR( *pxSemaphore, &xHigherPriorityTaskWoken );
+	}
+	else
+	{
+		xSemaphoreGive( *pxSemaphore );
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ * Routine:  sys_sem_free
+ *---------------------------------------------------------------------------*
+ * Description:
+ *      Deallocates a semaphore
+ * Inputs:
+ *      sys_sem_t sem           -- Semaphore to free
+ *---------------------------------------------------------------------------*/
+void sys_sem_free( sys_sem_t *pxSemaphore )
+{
+	SYS_STATS_DEC(sem.used);
+	vQueueDelete( *pxSemaphore );
+}
+
 /** Create a new mutex
  * @param mutex pointer to the mutex to create
  * @return a new mutex */
@@ -429,42 +465,6 @@ void sys_mutex_free( sys_mutex_t *pxMutex )
 	vQueueDelete( *pxMutex );
 }
 
-
-/*---------------------------------------------------------------------------*
- * Routine:  sys_sem_signal
- *---------------------------------------------------------------------------*
- * Description:
- *      Signals (releases) a semaphore
- * Inputs:
- *      sys_sem_t sem           -- Semaphore to signal
- *---------------------------------------------------------------------------*/
-void sys_sem_signal( sys_sem_t *pxSemaphore )
-{
-portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-
-	if( xInsideISR != pdFALSE )
-	{
-		xSemaphoreGiveFromISR( *pxSemaphore, &xHigherPriorityTaskWoken );
-	}
-	else
-	{
-		xSemaphoreGive( *pxSemaphore );
-	}
-}
-
-/*---------------------------------------------------------------------------*
- * Routine:  sys_sem_free
- *---------------------------------------------------------------------------*
- * Description:
- *      Deallocates a semaphore
- * Inputs:
- *      sys_sem_t sem           -- Semaphore to free
- *---------------------------------------------------------------------------*/
-void sys_sem_free( sys_sem_t *pxSemaphore )
-{
-	SYS_STATS_DEC(sem.used);
-	vQueueDelete( *pxSemaphore );
-}
 
 /*---------------------------------------------------------------------------*
  * Routine:  sys_init

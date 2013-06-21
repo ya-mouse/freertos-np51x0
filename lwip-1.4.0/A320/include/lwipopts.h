@@ -40,7 +40,13 @@
 
 #define LWIP_DEBUG              1
 #define DBG_TYPES_ON            ( DBG_LEVEL_WARNING | DBG_LEVEL_SEVERE | DBG_LEVEL_SERIOUS )
-#define FEC_DEBUG               ( DBG_LEVEL_WARNING | DBG_ON )
+#define ETHARP_DEBUG            LWIP_DBG_ON
+#define NETIF_DEBUG             LWIP_DBG_ON
+#define TCPIP_DEBUG             LWIP_DBG_OFF
+#define ICMP_DEBUG              LWIP_DBG_ON
+#define TCP_DEBUG               LWIP_DBG_OFF
+#define IP_DEBUG                LWIP_DBG_OFF
+#define UDP_DEBUG               LWIP_DBG_OFF
 
 /* ------------------------ Memory options -------------------------------- */
 /* MEM_ALIGNMENT: should be set to the alignment of the CPU for which
@@ -181,5 +187,35 @@ a lot of data that needs to be copied, this should be set high. */
 /* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
    timeouts. */
 #define MEMP_NUM_SYS_TIMEOUT    (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + PPP_SUPPORT)
+
+/*
+   ------------------------------------
+   ---------- Thread options ----------
+   ------------------------------------
+*/
+
+/**
+ * TCPIP_THREAD_STACKSIZE: The stack size used by the main tcpip thread.
+ * The stack size value itself is platform-dependent, but is passed to
+ * sys_thread_new() when the thread is created.
+ */
+#define TCPIP_THREAD_STACKSIZE          1024
+
+/**
+ * TCPIP_THREAD_PRIO: The priority assigned to the main tcpip thread.
+ * The priority value itself is platform-dependent, but is passed to
+ * sys_thread_new() when the thread is created.
+ */
+#define TCPIP_THREAD_PRIO               3
+
+/**
+ * TCPIP_MBOX_SIZE: The mailbox size for the tcpip thread messages
+ * The queue size value itself is platform-dependent, but is passed to
+ * sys_mbox_new() when tcpip_init is called.
+ * Should be sizeof(struct tcpip_msg), look at lwip/tcpip.h
+ */
+#ifndef TCPIP_MBOX_SIZE
+#define TCPIP_MBOX_SIZE                 16
+#endif
 
 #endif /* __LWIPOPTS_H__ */
