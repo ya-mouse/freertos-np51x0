@@ -154,7 +154,7 @@ struct xFtmac100If *pgMac100If;
 /*
  * Interrupt handler.
  */
-static void ftMac100_InterruptHandler( void );
+void ftMac100_InterruptHandler( void );
 static void vFtMac100_ISR_Wrapper( void );
 
 /*
@@ -598,7 +598,7 @@ check_next:
 }
 /*-----------------------------------------------------------*/
 
-static void ftMac100_InterruptHandler( void )
+void ftMac100_InterruptHandler( void )
 {
 	extern portBASE_TYPE xInsideISR;
 	int i, status, phycr;

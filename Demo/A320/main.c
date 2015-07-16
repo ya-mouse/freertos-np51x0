@@ -141,7 +141,7 @@
 /*-----------------------------------------------------------*/
 
 /* Constants for the ComTest tasks. */
-#define mainCOM_BAUD_RATE	( ( unsigned long ) 38400 )
+#define mainCOM_BAUD_RATE	( ( unsigned long ) 115200 )
 
 /* Priorities for the demo application tasks. */
 #define mainLED_TASK_PRIORITY		( tskIDLE_PRIORITY + 3 )
@@ -209,6 +209,16 @@ int main( void )
 {
 	/* Setup the hardware for use with the Olimex demo board. */
 	prvSetupHardware();
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
+	vSerialPutString( (const char *) "ErrorChecks task start\n" );
 
 	/* Add network interface to the system */
 	apps_init();
@@ -234,6 +244,7 @@ int main( void )
 	called.  The demo applications included in the FreeRTOS.org download switch
 	to supervisor mode prior to main being called.  If you are not using one of
 	these demo application projects then ensure Supervisor mode is used here. */
+	vSerialPutString( (const char *) "Start Scheduler\n" );
 	vTaskStartScheduler();
 
 	/* Should never reach here! */

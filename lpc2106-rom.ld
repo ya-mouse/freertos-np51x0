@@ -1,7 +1,7 @@
 MEMORY 
 {
-	flash	: ORIGIN = 0, LENGTH = 512K
-	ram	: ORIGIN = 0x10000000, LENGTH = 64M
+	flash(RX)	: ORIGIN = 0x80180000, LENGTH = 512K
+	ram	: ORIGIN = 0x00008000, LENGTH = 2M
 }
 
 /* define beginning and ending of stack */
@@ -21,6 +21,10 @@ SECTIONS
 		*(.glue_7t)
 	} >flash
 
+	. = ALIGN(4);
+	.rel.plt : { *(.rel.plt) } >flash
+
+	. = ALIGN(4);
 	.ARM.exidx :
 	{
 		__exidx_start = .;
@@ -31,7 +35,7 @@ SECTIONS
 	. = ALIGN(4);
 	__end_of_text__ = .;
 
-	.data : AT ( __end_of_text__ ) 
+	.data : AT ( __end_of_text__ )
 	{
 		__data_beg__ = .;
 		*(.data)

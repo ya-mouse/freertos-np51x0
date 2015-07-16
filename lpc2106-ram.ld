@@ -21,6 +21,8 @@ SECTIONS
 		*(.glue_7t)
 	} >ram
 
+	.rel.plt : { *(.rel.plt) } >ram
+
 	.ARM.exidx :
 	{
 		__exidx_start = .;

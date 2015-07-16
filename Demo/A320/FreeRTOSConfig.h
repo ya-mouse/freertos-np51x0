@@ -93,9 +93,9 @@
 #define configUSE_PREEMPTION		1
 #define configUSE_IDLE_HOOK		0
 #define configUSE_TICK_HOOK		0
-#define configCPU_CLOCK_HZ		( ( unsigned long ) 46137344 )	/* =44MHz */
+#define configCPU_CLOCK_HZ		( ( unsigned long ) 192000000 )	/* =44MHz */
 #define configTIMER_OSC_CLOCK_HZ	( ( unsigned long ) 32768 )
-#define configUART_CLOCK_HZ		( ( unsigned long ) 18432000 )
+#define configUART_CLOCK_HZ		( ( unsigned long ) 14745600 )
 #define configTICK_RATE_HZ		( ( portTickType ) 1000 )
 #define configMAX_PRIORITIES		( ( unsigned portBASE_TYPE ) 5 )
 #define configMINIMAL_STACK_SIZE	( ( unsigned short ) 128 )

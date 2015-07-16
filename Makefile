@@ -65,14 +65,13 @@ CRT0=$(DEMO_SOURCE_DIR)/boot.s
 WARNINGS=-Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare \
 		-Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wunused
 
-
 #
 # CFLAGS common to both the THUMB and ARM mode builds
 #
 CFLAGS=$(WARNINGS) -D $(RUN_MODE) -D $(BOARD_NAME) -I$(DEMO_SOURCE_DIR) -I$(RTOS_SOURCE_DIR)/include \
 		-I$(DEMO_COMMON_SOURCE_DIR)/include -I$(LWIP_SOURCE_DIR)/src/include -I$(LWIP_SOURCE_DIR)/src/include/ipv4 \
 		-I$(LWIP_SOURCE_DIR)/$(BOARD_NAME)/include \
-		 $(DEBUG) -mcpu=fa526 -T$(LDSCRIPT) $(OPTIM) -fomit-frame-pointer -fno-strict-aliasing -fno-dwarf2-cfi-asm
+		 $(DEBUG) -mno-thumb-interwork -march=armv4 -mtune=fa526 -msoft-float -Uarm -T$(LDSCRIPT) $(OPTIM) -fomit-frame-pointer -fno-strict-aliasing -fno-dwarf2-cfi-asm
 
 ifeq ($(USE_THUMB_MODE),YES)
 	CFLAGS += -mthumb-interwork -D THUMB_INTERWORK
@@ -80,7 +79,7 @@ ifeq ($(USE_THUMB_MODE),YES)
 endif
 
 
-LINKER_FLAGS= --fix-v4bx -Xlinker -ortosdemo.elf -Xlinker -M -Xlinker -Map=rtosdemo.map
+LINKER_FLAGS= -Xlinker -ortosdemo.elf -Xlinker -M -Xlinker -Map=rtosdemo.map
 
 #
 # Source files that can be built to THUMB mode.
@@ -122,7 +121,7 @@ rtosdemo.hex : rtosdemo.elf
 	$(OBJDUMP) -D rtosdemo.elf > rtosdemo.dump
 
 rtosdemo.elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0) Makefile
-	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
+	$(CC) -v $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
 
 $(THUMB_OBJ) : %.o : %.c $(LDSCRIPT) Makefile
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@

@@ -18,8 +18,11 @@ static void vDemoAppsTask( void *pvParameters );
  */
 void apps_init( void )
 {
+	vSerialPutString("INIT\n");
+	vSerialPutString("...\n");
 	if( sys_thread_new( "demo-apps", vDemoAppsTask, NULL, 1024, (tskIDLE_PRIORITY + 1) ) == NULL )
 		printf( "apps_init: create task failed!\n");
+	vSerialPutString("OK\n");
 }
 
 
@@ -28,9 +31,11 @@ static void vDemoAppsTask( void *pvParameters )
 	struct ip_addr  xIpAddr, xNetMast, xGateway;
 	static struct netif ftmac100_if;
 
+	vSerialPutString("TASK\n");
 	/* The parameters are not used in this function. */
 	( void ) pvParameters;
 
+#if 0
 	/* Init lwip library */
 	tcpip_init( NULL, NULL );
 
@@ -48,11 +53,12 @@ static void vDemoAppsTask( void *pvParameters )
 
 	/* link is up */
 	netif_set_link_up( &ftmac100_if );
-
+#endif
 	for ( ;; )
 	{
 		/* do nothing, delay very long time, let other tasks
 		   to run */
+		vSerialPutString("loop\n");
 		vTaskDelay( 0xffff );
 	}
 }
