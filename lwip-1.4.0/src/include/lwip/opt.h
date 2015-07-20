@@ -1812,7 +1812,7 @@
  * NETIF_DEBUG: Enable debugging in netif.c.
  */
 #ifndef NETIF_DEBUG
-#define NETIF_DEBUG                     LWIP_DBG_OFF
+#define NETIF_DEBUG                     LWIP_DBG_ON
 #endif
 
 /**
@@ -1847,7 +1847,7 @@
  * ICMP_DEBUG: Enable debugging in icmp.c.
  */
 #ifndef ICMP_DEBUG
-#define ICMP_DEBUG                      LWIP_DBG_OFF
+#define ICMP_DEBUG                      LWIP_DBG_ON
 #endif
 
 /**
@@ -1917,14 +1917,14 @@
  * TCP_DEBUG: Enable debugging for TCP.
  */
 #ifndef TCP_DEBUG
-#define TCP_DEBUG                       LWIP_DBG_OFF
+#define TCP_DEBUG                       LWIP_DBG_ON
 #endif
 
 /**
  * TCP_INPUT_DEBUG: Enable debugging in tcp_in.c for incoming debug.
  */
 #ifndef TCP_INPUT_DEBUG
-#define TCP_INPUT_DEBUG                 LWIP_DBG_OFF
+#define TCP_INPUT_DEBUG                 LWIP_DBG_ON
 #endif
 
 /**
@@ -1960,7 +1960,7 @@
  * TCP_OUTPUT_DEBUG: Enable debugging in tcp_out.c output functions.
  */
 #ifndef TCP_OUTPUT_DEBUG
-#define TCP_OUTPUT_DEBUG                LWIP_DBG_OFF
+#define TCP_OUTPUT_DEBUG                LWIP_DBG_ON
 #endif
 
 /**
@@ -1988,7 +1988,7 @@
  * TCPIP_DEBUG: Enable debugging in tcpip.c.
  */
 #ifndef TCPIP_DEBUG
-#define TCPIP_DEBUG                     LWIP_DBG_OFF
+#define TCPIP_DEBUG                     LWIP_DBG_ON
 #endif
 
 /**

@@ -151,6 +151,8 @@ void vPortYieldProcessor( void )
 	/* Perform the context switch.  First save the context of the current task. */
 	portSAVE_CONTEXT();
 
+//	(*(REG32(0x98700000))) = 0;
+
 	/* Find the highest priority task that is ready to run. */
 	__asm volatile ( "bl vTaskSwitchContext" );
 
@@ -162,6 +164,9 @@ void vPortYieldProcessor( void )
 /* 
  * The ISR used for the scheduler tick.
  */
+
+extern signed xSerialPutChar( signed char );
+
 void vTickISR( void ) __attribute__((naked));
 void vTickISR( void )
 {

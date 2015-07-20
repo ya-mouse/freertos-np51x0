@@ -210,22 +210,18 @@ int main( void )
 	/* Setup the hardware for use with the Olimex demo board. */
 	prvSetupHardware();
 	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
-	vSerialPutString( (const char *) "ErrorChecks task start\n" );
 
 	/* Add network interface to the system */
 	apps_init();
+
+	simple_printf("TEST %p\n", SMC_LED_ADDR);
+
+	prvToggleOnBoardLED(3);
+
+	vStartLEDFlashTasks( mainLED_TASK_PRIORITY );
 #if 0
 	/* Start the demo/test application tasks. */
 	vStartIntegerMathTasks( tskIDLE_PRIORITY );
-	vStartLEDFlashTasks( mainLED_TASK_PRIORITY );
 	vStartPolledQueueTasks( mainQUEUE_POLL_PRIORITY );
 	vStartMathTasks( tskIDLE_PRIORITY );
 	vStartSemaphoreTasks( mainSEM_TEST_PRIORITY );
@@ -305,7 +301,7 @@ xTaskHandle xCreatedTask;
 		{
 			/* An error has been detected in one of the tasks - flash faster. */
 			xDelayPeriod = mainERROR_FLASH_PERIOD;
-			prvToggleOnBoardLED(0x80);
+			prvToggleOnBoardLED(5);
 			//xSerialPutChar('E');
 		}
 		else
@@ -327,16 +323,34 @@ static void prvSetupHardware( void )
 
 	/* select 32768Hz oscillator */
 	PMU_OSCC |= 0x4;
+
+	/* 0xDFFC000F */
+	(*(REG32 (0x98800100))) = 0xDFF8003F;
+
+	(*(REG32 (0x98800004))) = 0;
+	(*(REG32 (0x98800024))) = 0;
+
+	(*(REG32 (0x98800008))) = 0xffffffff;
+	(*(REG32 (0x98800028))) = 0xffffffff;
+
+	(*(REG32 (0x9880000C))) = 0;
+	(*(REG32 (0x98800010))) = 0;
+
+	(*(REG32 (0x9880002C))) = 0;
+	(*(REG32 (0x98800030))) = 0;
+
+	SMC_LED_ADDR = (SMC_LED_ADDR & 0xffffffc0) | 0x3f;
 	/* Initialise LED outputs. */
-	vParTestInitialise();
+//	vParTestInitialise();
 
 	xSerialPortInitMinimal( mainCOM_BAUD_RATE );
+
 }
 /*-----------------------------------------------------------*/
 
 void prvToggleOnBoardLED( int num )
 {
-	SMC_LED_ADDR = num;
+	SMC_LED_ADDR ^= ((1 << num) & 0x3f);
 }
 
 /*-----------------------------------------------------------*/
@@ -470,5 +484,14 @@ static long lErrorOccurred = pdFALSE;
 	}
 }
 
+void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed char *pcTaskName )
+{
+	( void ) pcTaskName;
+	( void ) pxTask;
 
-
+	vSerialPutString("Stack Overflow in\r\n");
+	vSerialPutString(pcTaskName);
+	vSerialPutString("\r\n");
+	taskDISABLE_INTERRUPTS();
+	for( ;; );
+}

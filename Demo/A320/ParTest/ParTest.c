@@ -110,6 +110,6 @@ void vParTestSetLED( unsigned portBASE_TYPE uxLED, signed portBASE_TYPE xValue )
 
 void vParTestToggleLED( unsigned portBASE_TYPE uxLED )
 {
-	SMC_LED_ADDR = uxLED;
+	SMC_LED_ADDR ^= ((1 << uxLED) & 0x3f);
 }
 

@@ -133,7 +133,7 @@ void vStartLEDFlashTasks( unsigned portBASE_TYPE uxPriority )
 {
 unsigned portBASE_TYPE uxLEDTask;
 xLEDParameters *pxLEDParameters;
-const unsigned portBASE_TYPE uxNumOfLEDs = 8;
+const unsigned portBASE_TYPE uxNumOfLEDs = 4;
 const portTickType xFlashRate = 125;
 
 	/* Create the eight tasks. */

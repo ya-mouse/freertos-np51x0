@@ -82,7 +82,7 @@ typedef u32_t sys_prot_t;
 /* C runtime functions redefined */
 #define printf	simple_printf
 #define sprintf	simple_sprintf
-#define snprintf simeple_snprintf
+#define snprintf simple_snprintf
 
 /* Plaform specific diagnostic output */
 #define LWIP_PLATFORM_DIAG(x)   do { printf x; } while(0)

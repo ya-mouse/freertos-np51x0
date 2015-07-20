@@ -1,7 +1,7 @@
 MEMORY 
 {
-	flash	: ORIGIN = 0, LENGTH = 512K
-	ram	: ORIGIN = 0x00000000, LENGTH = 64M
+	flash	: ORIGIN = 0x80050020, LENGTH = 1728K
+	ram	: ORIGIN = 0x00000000, LENGTH = 2M
 }
 
 /* define beginning and ending of stack */
@@ -20,8 +20,6 @@ SECTIONS
 		*(.glue_7)
 		*(.glue_7t)
 	} >ram
-
-	.rel.plt : { *(.rel.plt) } >ram
 
 	.ARM.exidx :
 	{

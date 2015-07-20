@@ -42,10 +42,10 @@
 #define DBG_TYPES_ON            ( DBG_LEVEL_WARNING | DBG_LEVEL_SEVERE | DBG_LEVEL_SERIOUS )
 #define ETHARP_DEBUG            LWIP_DBG_ON
 #define NETIF_DEBUG             LWIP_DBG_ON
-#define TCPIP_DEBUG             LWIP_DBG_OFF
+#define TCPIP_DEBUG             LWIP_DBG_ON
 #define ICMP_DEBUG              LWIP_DBG_ON
-#define TCP_DEBUG               LWIP_DBG_OFF
-#define IP_DEBUG                LWIP_DBG_OFF
+#define TCP_DEBUG               LWIP_DBG_ON
+#define IP_DEBUG                LWIP_DBG_ON
 #define UDP_DEBUG               LWIP_DBG_OFF
 
 /* ------------------------ Memory options -------------------------------- */
@@ -73,7 +73,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_NUM_TCP_PCB_LISTEN 8
 /* MEMP_NUM_TCP_SEG: the number of simultaneously queued TCP
    segments. */
-#define MEMP_NUM_TCP_SEG        8
+#define MEMP_NUM_TCP_SEG        16
 
 /* The following four are used only with the sequential API and can be
    set to 0 if the application only will use the raw API. */
@@ -114,7 +114,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCP_MSS                 512
 
 /* TCP sender buffer space (bytes). */
-#define TCP_SND_BUF             512
+#define TCP_SND_BUF             1024
 
 /* TCP sender buffer space (pbufs). This must be at least = 2 *
    TCP_SND_BUF/TCP_MSS for things to work. */

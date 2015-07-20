@@ -97,7 +97,7 @@
 #include "flash.h"
 
 #define ledSTACK_SIZE		configMINIMAL_STACK_SIZE
-#define ledNUMBER_OF_LEDS	( 3 )
+#define ledNUMBER_OF_LEDS	( 1 )
 #define ledFLASH_RATE_BASE	( ( portTickType ) 333 )
 
 /* Variable used by the created tasks to calculate the LED number to use, and
@@ -142,11 +142,11 @@ unsigned portBASE_TYPE uxLED;
 	portEXIT_CRITICAL();
 
 	xFlashRate = ledFLASH_RATE_BASE + ( ledFLASH_RATE_BASE * ( portTickType ) uxLED );
-	xFlashRate /= portTICK_RATE_MS;
+//	xFlashRate /= portTICK_RATE_MS;
 
 	/* We will turn the LED on and off again in the delay period, so each
 	delay is only half the total period. */
-	xFlashRate /= ( portTickType ) 2;
+//	xFlashRate /= ( portTickType ) 2;
 
 	/* We need to initialise xLastFlashTime prior to the first call to 
 	vTaskDelayUntil(). */

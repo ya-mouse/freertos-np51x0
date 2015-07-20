@@ -105,7 +105,7 @@ $(addprefix $(LWIP_SOURCE_DIR)/src/core/ipv4/, inet.c ip.c ip_addr.c icmp.c ip_f
 $(addprefix $(LWIP_SOURCE_DIR)/src/api/, tcpip.c api_msg.c err.c api_lib.c netbuf.c netdb.c netifapi.c sockets.c) \
 $(addprefix $(LWIP_SOURCE_DIR)/src/netif/, etharp.c) \
 $(addprefix $(LWIP_SOURCE_DIR)/A320/, sys_arch.c ftmac100.c) \
-apps/init.c \
+apps/init.c apps/http_server.c \
 $(DEMO_LIB_SOURCE_DIR)/stdlib/div64.c \
 $(DEMO_LIB_SOURCE_DIR)/stdio/simple_printf.c
 
@@ -120,13 +120,16 @@ rtosdemo.hex : rtosdemo.elf
 	$(OBJCOPY) rtosdemo.elf -O ihex rtosdemo.hex
 	$(OBJDUMP) -D rtosdemo.elf > rtosdemo.dump
 
-rtosdemo.elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0) Makefile
-	$(CC) -v $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0) $(LINKER_FLAGS)
+rtosdemo.elf : $(ARM_OBJ) $(THUMB_OBJ) $(CRT0:.s=.o) Makefile
+	$(CC) $(CFLAGS) $(ARM_OBJ) $(THUMB_OBJ) -nostartfiles $(CRT0:.s=.o) $(LINKER_FLAGS)
 
 $(THUMB_OBJ) : %.o : %.c $(LDSCRIPT) Makefile
 	$(CC) -c $(THUMB_FLAGS) $(CFLAGS) $< -o $@
 
-$(ARM_OBJ) : %.o : %.c $(LDSCRIPT) Makefile
+$(ARM_OBJ): %.o : %.c $(LDSCRIPT) Makefile
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(CRT0:.s=.o): %.o : %.s Makefile
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean :

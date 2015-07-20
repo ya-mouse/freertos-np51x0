@@ -70,7 +70,6 @@ _mainCRTStartup:
 	msr   CPSR_c, #MODE_SVC|I_BIT|F_BIT
 
 	/* Clear BSS. */
-
 	mov     a2, #0		/* Fill value */
 	mov	fp, a2		/* Null frame pointer */
 	mov	r7, a2		/* Null frame pointer for Thumb */
@@ -153,9 +152,17 @@ _dabt:  .word __dabt                    /* data abort			*/
 _irq:   .word __irq                     /* IRQ				*/
 _fiq:   .word __fiq                     /* FIQ				*/
 
-__undf:	b	.			/* undefined			*/
-__pabt:	b	.			/* program abort		*/
-__dabt:	b	.			/* data abort			*/
+_err:
+	ldr	r0, =0x98700000
+	str	r1, [r0]
+	b _err
+
+__undf:	ldr	r1, =0x1
+	b	_err			/* undefined			*/
+__pabt:	ldr	r1, =0x2
+	b	_err			/* program abort		*/
+__dabt:	ldr	r1, =0x3
+	b	_err			/* data abort			*/
 __fiq:	b	.			/* FIQ				*/
 
 	.extern VICVectISR

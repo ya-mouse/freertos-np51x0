@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+#include "http_server.h"
 
 /* ------------------------ lwIP includes --------------------------------- */
 #include "lwip/api.h"
@@ -22,6 +23,7 @@ void apps_init( void )
 	vSerialPutString("...\n");
 	if( sys_thread_new( "demo-apps", vDemoAppsTask, NULL, 1024, (tskIDLE_PRIORITY + 1) ) == NULL )
 		printf( "apps_init: create task failed!\n");
+
 	vSerialPutString("OK\n");
 }
 
@@ -35,7 +37,7 @@ static void vDemoAppsTask( void *pvParameters )
 	/* The parameters are not used in this function. */
 	( void ) pvParameters;
 
-#if 0
+#if 1
 	/* Init lwip library */
 	tcpip_init( NULL, NULL );
 
@@ -53,12 +55,16 @@ static void vDemoAppsTask( void *pvParameters )
 
 	/* link is up */
 	netif_set_link_up( &ftmac100_if );
+
+//        lwip_init();
 #endif
+//	if( sys_thread_new( "httpd", http_server_netconn_thread, NULL, 256, ( tskIDLE_PRIORITY + 2 ) ) == NULL )
+//		printf( "apps_init: create task failed!\n");
+	vSerialPutString("loop\n");
 	for ( ;; )
 	{
 		/* do nothing, delay very long time, let other tasks
 		   to run */
-		vSerialPutString("loop\n");
 		vTaskDelay( 0xffff );
 	}
 }
