@@ -1,0 +1,3 @@
+[submodule "apps/modbus-gate"]
+	path = apps/modbus-gate
+	url = git://github.com/ya-mouse/modbus-gate.git
