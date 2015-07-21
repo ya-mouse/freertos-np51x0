@@ -46,6 +46,7 @@
 #define ICMP_DEBUG              LWIP_DBG_ON
 #define TCP_DEBUG               LWIP_DBG_ON
 #define IP_DEBUG                LWIP_DBG_ON
+#define SOCKETS_DEBUG           LWIP_DBG_ON
 #define UDP_DEBUG               LWIP_DBG_OFF
 
 /* ------------------------ Memory options -------------------------------- */
@@ -217,5 +218,8 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef TCPIP_MBOX_SIZE
 #define TCPIP_MBOX_SIZE                 16
 #endif
+
+#define DEFAULT_TCP_RECVMBOX_SIZE       8
+#define DEFAULT_ACCEPTMBOX_SIZE         8
 
 #endif /* __LWIPOPTS_H__ */

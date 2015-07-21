@@ -65,5 +65,3 @@ SECTIONS
 	_end = .;
 	_bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
 	PROVIDE (end = .);
-
-

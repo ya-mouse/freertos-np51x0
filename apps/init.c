@@ -55,11 +55,9 @@ static void vDemoAppsTask( void *pvParameters )
 
 	/* link is up */
 	netif_set_link_up( &ftmac100_if );
-
-//        lwip_init();
 #endif
-//	if( sys_thread_new( "httpd", http_server_netconn_thread, NULL, 256, ( tskIDLE_PRIORITY + 2 ) ) == NULL )
-//		printf( "apps_init: create task failed!\n");
+//	if( sys_thread_new( "httpd", http_server_netconn_thread, NULL, 16384, ( tskIDLE_PRIORITY + 2 ) ) == NULL )
+//		simple_printf( "apps_init: create task failed!\n");
 	vSerialPutString("loop\n");
 	for ( ;; )
 	{

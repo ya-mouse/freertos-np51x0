@@ -138,6 +138,9 @@
 #include "BlockQ.h"
 #include "serial.h"
 
+#include "http_server.h"
+#include "xmodem.h"
+
 /*-----------------------------------------------------------*/
 
 /* Constants for the ComTest tasks. */
@@ -193,6 +196,8 @@ static void vErrorChecks( void *pvParameters );
  */
 static void vMemCheckTask( void *pvParameters );
 
+static void vUartCmd( void *pvParameters );
+
 /*
  * Configure the processor for use with the Olimex demo board.  This includes
  * setup for the I/O, system clock, and access timings.
@@ -214,11 +219,10 @@ int main( void )
 	/* Add network interface to the system */
 	apps_init();
 
-	simple_printf("TEST %p\n", SMC_LED_ADDR);
-
 	prvToggleOnBoardLED(3);
 
 	vStartLEDFlashTasks( mainLED_TASK_PRIORITY );
+	xTaskCreate( vUartCmd, ( signed char * ) "uart_cmd", configMINIMAL_STACK_SIZE, NULL, mainCHECK_TASK_PRIORITY, NULL );
 #if 0
 	/* Start the demo/test application tasks. */
 	vStartIntegerMathTasks( tskIDLE_PRIORITY );
@@ -247,6 +251,139 @@ int main( void )
 	return 0;
 }
 /*-----------------------------------------------------------*/
+
+static int cmd_pos = 0;
+static unsigned char cmd_buf[32];
+
+static void doReset(void)
+{
+	FTWDT010_CR = 0;
+	FTWDT010_LOAD = 0;
+	FTWDT010_RESTART = 0x5ab9; // Magick
+
+	FTWDT010_CR = 0x11;
+	FTWDT010_CR = 0x13;
+}
+
+typedef struct _BIN_Obj_ {
+	unsigned int *addr;
+	unsigned int offset;
+	unsigned int entry;
+} BIN_Obj;
+
+typedef struct BIN_Obj *BIN_Handle;
+
+BIN_Handle BIN_init(unsigned int *addr)
+{
+	static struct _BIN_Obj_ binbuf;
+	BIN_Handle bufHandle = (BIN_Obj *)&binbuf;
+
+	memset(bufHandle, 0, sizeof(BIN_Obj));
+
+	binbuf.addr = addr;
+
+	return bufHandle;
+}
+
+int BIN_reader(long data, unsigned char *buffer, int len)
+{
+	BIN_Obj *bufobj = (BIN_Obj *)data;
+
+	simple_printf("%04x @ %08x\n", len, bufobj->addr + bufobj->offset);
+	memcpy(bufobj->addr + bufobj->offset, buffer, len);
+
+	bufobj->offset += len;
+
+	return len;
+}
+
+int BIN_end(long data, unsigned char *buffer, int len)
+{
+	simple_printf("END\n");
+
+	return 1;
+}
+
+static void doLoad()
+{
+	XMODEM_Handle myXmodem;
+	BIN_Handle myBin;
+	unsigned int *ptr = (unsigned int *)0x1000000;
+	int i;
+
+	myBin = BIN_init((unsigned int *)0x1000000);
+	myXmodem = XMODEM_init((struct SCI_REGS *)0x98200000);
+	XMODEM_setReader(myXmodem, BIN_reader, (long)myBin);
+	XMODEM_setEnd(myXmodem, BIN_end, (long)myBin);
+
+	XMODEM_recv(myXmodem, NULL, 128);
+}
+
+static void process_cmd(const char *cmd)
+{
+	if (!*cmd) {
+		return;
+	} else if (!strcmp(cmd, "bios")) {
+		simple_printf("** Boot to BIOS\n");
+		doReset();
+	} else if (!strcmp(cmd, "reset")) {
+		simple_printf("\n** Reboot\n");
+		doReset();
+	} else if (!strncmp(cmd, "d ", 2)) {
+		unsigned int addr = strtol(cmd+2, NULL, 16);
+		int i;
+		simple_printf("[%08x]", addr);
+		for (i=0; i<16; i++) {
+			simple_printf(" %02x", *(unsigned char *)(addr + i));
+		}
+		simple_printf("\n");
+	} else if (!strcmp(cmd, "load")) {
+		doLoad();
+	} else if (!strcmp(cmd, "start")) {
+		if( sys_thread_new( "httpd", http_server_netconn_thread, NULL, 16384, ( tskIDLE_PRIORITY + 2 ) ) == NULL )
+			simple_printf( "apps_init: create task failed!\n");
+	}
+}
+
+static void vUartCmd( void *pvParameters )
+{
+	for (;;) {
+		unsigned char in;
+		if (UART0_LSR & UART_LSR_DR) {
+			in = UART0_RBR;
+			switch (in) {
+				case '\r':
+					if (cmd_pos > 0) {
+						memset(cmd_buf+cmd_pos, 0, sizeof(cmd_buf)-cmd_pos);
+						process_cmd(cmd_buf);
+					}
+					cmd_pos = 0;
+					vSerialPutString((const char *)"\r\n# ");
+					break;
+
+				case 8:
+				case 0x7f:
+					if (cmd_pos > 0) {
+						cmd_pos--;
+						vSerialPutString((const char *)"\x8 \x8");
+					}
+					break;
+
+				default:
+					if (in < 0x20 || in > 0x7e)
+						break;
+					xSerialPutChar(in);
+					cmd_buf[cmd_pos++] = in;
+					if (cmd_pos == sizeof(cmd_buf)-1) {
+						vSerialPutString((const char *)"\r\n*** cmd overflow ***\r\n# ");
+						cmd_pos = 0;
+					}
+					break;
+			}
+		}
+		vTaskDelay( 0x40 );
+	}
+}
 
 static void vErrorChecks( void *pvParameters )
 {
